@@ -61,7 +61,11 @@
     "wabt",
     "wasm",
     "wdio",
-    "wikilinks"
+    "wikilink",
+    "wikilinks",
+    "dataview",
+    "skos",
+    "tagfolder"
   ],
   "ignoreRegExpList": [
     "/GHSA(-[0-9a-z]{4}){3}/g"

@@ -1,0 +1,11 @@
+{
+  "author": "mnaoumov",
+  "authorUrl": "https://github.com/mnaoumov/",
+  "description": "Make every tag a note: tag a note by linking it, with a tag hierarchy, a tag tree with counts, subtree search and a migration from existing tags.",
+  "fundingUrl": "https://www.buymeacoffee.com/mnaoumov",
+  "id": "tag-notes",
+  "isDesktopOnly": false,
+  "minAppVersion": "1.14.5",
+  "name": "Tag Notes",
+  "version": "0.0.0"
+}

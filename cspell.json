@@ -33,6 +33,7 @@
     "inlines",
     "Invocables",
     "jiti",
+    "katex",
     "Keymap",
     "lezer",
     "liberapay",

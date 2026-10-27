@@ -1,40 +1,34 @@
 # Settings
 
-Every setting `Tag Notes` stores, listed by the **key it is written under in `data.json`** rather than by its display label — that is what you see when you open the file, hit a sync conflict, or read a support thread.
+Open **Settings → Community plugins → `Tag Notes`** to choose where the plugin reads tags and parents. Changes apply live.
 
-Find them in Obsidian under **Settings → Community plugins → `Tag Notes`**.
+## Property names
 
-## General
+1. `tagsPropertyName` defaults to `keywords`. This must be a list containing links to tag notes.
+2. `parentPropertyName` defaults to `broader`. A tag note lists its parents here.
 
-- `textSetting`
-  - free text, shown in the settings tab as **Text setting name**. The scaffolded sample setting; nothing reads it yet.
+The two properties must differ and cannot use the core `tags` name, which Obsidian treats as tag strings rather than links. Blank or invalid values show a validation message and use the default.
 
-## Try it
+## Tag folder
 
-Change the setting without leaving this note. The change applies live — the plugin's settings component picks it up, so there is no reload.
+`tagFolderPath` defaults to `Tags`. Notes in this folder and its subfolders appear as tag notes even before anything tags them. Linked tag notes outside the folder are included too. An empty folder path includes the vault root. Use a vault-relative path with forward slashes, without `.` or `..` segments.
 
-```code-button
----
-caption: Set textSetting to "changed by the demo"
----
-await require('/demoSetup.ts').setTextSetting(app, 'changed by the demo');
-```
-
-Manual equivalent: type the same value into **Text setting name** in the settings tab.
-
-Open the settings tab now and the field shows the new value. When you are done, put it back:
+## Try a different property
 
 ```code-button
 ---
-caption: Reset textSetting to its default
+caption: Use topics as the tags property
 ---
-await require('/demoSetup.ts').resetTextSetting(app);
+await require('/demoSetup.ts').setTagsPropertyName(app, 'topics');
 ```
 
-Manual equivalent: type `defaultText` back into the field.
+Manual equivalent: enter `topics` under **Tags property**. Existing `keywords` lists no longer tag notes until you restore that setting; no note is rewritten.
 
-## Adding your own
+```code-button
+---
+caption: Restore keywords
+---
+await require('/demoSetup.ts').setTagsPropertyName(app, 'keywords');
+```
 
-Settings are declared as plain properties on the `PluginSettings` class in `src/plugin-settings.ts`; the property's initial value **is** its default. `src/plugin-settings-tab.ts` renders one row per setting, and `src/plugin-settings-component.ts` is where migrations and validators go.
-
-When you add one, add it to this note too. The demo-vault coverage suite can be told to fail the build when a setting is documented nowhere — see the commented reflection spec in `src/demo-vault.no-app.integration.test.ts`.
+Manual equivalent: enter `keywords` under **Tags property**.

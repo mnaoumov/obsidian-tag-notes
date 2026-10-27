@@ -43,6 +43,7 @@ const WASM_MODULE_STUB_PATH = fileURLToPath(new URL('wasm-module-stub.ts', impor
  * unit test run on a fresh clone would otherwise fail to resolve it.
  */
 const STYLESHEET_STUB_PATH = fileURLToPath(new URL('stylesheet-stub.ts', import.meta.url));
+const MAX_TEST_WORKERS = 2;
 
 export const config = defineObsidianPluginVitestConfig({
   customProjects(context: ObsidianPluginVitestConfigContext): TestProjectConfiguration[] {
@@ -62,6 +63,7 @@ export const config = defineObsidianPluginVitestConfig({
   // Pattern MATCHED, so `/\.svelte$/` rewrites the extension and leaves the rest of the specifier glued
   // To the front of the stub path. The pattern has to cover the whole id.
   editContext(context: ObsidianPluginVitestConfigContext): void {
+    context.unitTests.maxWorkers = MAX_TEST_WORKERS;
     context.unitTests.alias = [
       { find: /^.+\.(?:svelte|vue)$/u, replacement: FRAMEWORK_COMPONENT_STUB_PATH },
       { find: /^.+\.(?:css|scss)$/u, replacement: STYLESHEET_STUB_PATH },

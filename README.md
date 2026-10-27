@@ -2,7 +2,9 @@
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/mnaoumov/obsidian-tag-notes)](https://github.com/mnaoumov/obsidian-tag-notes/releases) [![GitHub downloads](https://img.shields.io/github/downloads/mnaoumov/obsidian-tag-notes/total)](https://github.com/mnaoumov/obsidian-tag-notes/releases)
 
-Make every tag a note: tag a note by linking it, with a tag hierarchy, a tag tree with counts, subtree search and a migration from existing tags.
+Make every tag a note: tag a note with links in a list property, organize tag notes through parent links, and query direct or subtree counts through a read-only API. The tag tree, typing assistance and migration are still in development.
+
+See [the tag index and API](<./demo-vault/01 Tag index.md>) and [settings](<./demo-vault/02 Settings.md>).
 
 ## Demo vault
 

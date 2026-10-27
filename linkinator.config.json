@@ -1,4 +1,5 @@
 {
+  "concurrency": 2,
   "comment": [
     "Read automatically by linkinator, which the `lint:md` script runs from the project root over every Markdown file.",
     "The links to this plugin's own GitHub repository are skipped: the scaffold wrote them from the project's answers,",

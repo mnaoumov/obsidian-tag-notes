@@ -21,3 +21,4 @@ Manual equivalent: create two tag notes, link the parent from the child's `broad
 2. [02 Settings](<./02 Settings.md>): property names and the tag folder.
 3. [03 Convert tags](<./03 Convert tags.md>): preview and convert existing inline and property tags.
 4. [04 Tag this note](<./04 Tag this note.md>): choose by name or alias, create tags, and insert body mentions.
+5. [05 Queries and Bases](<./05 Queries and Bases.md>): live lists inside notes and a copied filter for core Bases.

@@ -1,4 +1,8 @@
-import type { TFile } from 'obsidian';
+import type {
+  MarkdownPostProcessorContext,
+  MarkdownRenderChild,
+  TFile
+} from 'obsidian';
 
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 // eslint-disable-next-line import-x/no-namespace -- Spy on the real prompt without replacing the module.
@@ -24,6 +28,7 @@ import type { TagNotesApi } from '../api.d.ts';
 
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { Plugin } from './plugin.ts';
+import { BasesFilterModal } from './queries/bases-filter-modal.ts';
 import {
   TAG_TREE_VIEW_TYPE,
   TagTreeView
@@ -47,6 +52,55 @@ afterEach(() => {
 });
 
 describe('TagNotes', () => {
+  it('registers live query blocks, detaches unloaded blocks and opens the Bases picker', async () => {
+    const app = App.createConfigured__({ files: { 'Tags/Query.md': '' } });
+    const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
+    plugins.push(plugin);
+    const onload = vi.spyOn(plugin, 'onload');
+    plugin.load();
+    await onload.mock.results[0]?.value;
+    const host = PluginHost.fromOriginalType2__(plugin);
+    const element = createDiv();
+    const blocks: MarkdownRenderChild[] = [];
+    host.markdownCodeBlockProcessors__.get('tag-notes')?.(
+      'tag: Tags/Query',
+      element,
+      castTo<MarkdownPostProcessorContext>({
+        addChild: (child: MarkdownRenderChild): void => {
+          blocks.push(child);
+          child.load();
+        },
+        sourcePath: 'Source.md'
+      })
+    );
+    expect(element.textContent).toBe('No tagged notes.');
+    const component = castTo<SettingsHost>(plugin).pluginSettingsComponent;
+    await component.editAndSave((settings) => {
+      settings.tagFolderPath = 'Elsewhere';
+    });
+    expect(element.textContent).toBe('Tag note not found: Tags/Query');
+    for (const block of blocks) {
+      block.unload();
+    }
+    await component.editAndSave((settings) => {
+      settings.tagFolderPath = 'Tags';
+    });
+    expect(element.textContent).toBe('Tag note not found: Tags/Query');
+    const open = vi.spyOn(BasesFilterModal.prototype, 'open').mockImplementation(noop);
+    host.commands__.get('copy-bases-filter')?.callback?.();
+    expect(open).toHaveBeenCalledOnce();
+    vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+    const notice = vi.spyOn(PluginNoticeComponent.prototype, 'showNotice');
+    const tag = plugin.api.getTagNotes()[0];
+    if (!tag) {
+      throw new Error('Missing tag');
+    }
+    castTo<BasesFilterModal>(open.mock.instances[0]).onChooseSuggestion(tag);
+    await vi.waitFor(() => {
+      expect(notice).toHaveBeenCalledWith(expect.stringContaining('Bases filter copied'));
+    });
+    vi.unstubAllGlobals();
+  });
   it('opens Tag this note only for a saved editor and reports selection errors', async () => {
     const app = App.createConfigured__({ files: { 'Source.md': 'Text ', 'Tags/Alpha.md': '' } });
     const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });

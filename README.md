@@ -6,6 +6,8 @@ Make every tag a note: tag a note with links in a list property, organize tag no
 
 See [the tag index and API](<./demo-vault/01 Tag index.md>), [settings](<./demo-vault/02 Settings.md>), [converting existing tags](<./demo-vault/03 Convert tags.md>) and [tagging while writing](<./demo-vault/04 Tag this note.md>).
 
+Embed live lists with a `tag-notes` block or copy a tag subtree as a core Bases filter: [queries and Bases](<./demo-vault/05 Queries and Bases.md>).
+
 ## Demo vault
 
 **The documentation is a demo vault.** Every feature has a note that explains what it does and why you would want it, with a button you can press to watch it happen.

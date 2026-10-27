@@ -1,0 +1,6 @@
+filters: 'list(note["keywords"]).contains(link("Materials/05 Queries and Bases/Tags/Parent.md")) || list(note["keywords"]).contains(link("Materials/05 Queries and Bases/Tags/Child.md")) || (file.folder == "Materials/05 Queries and Bases" && list(note["keywords"]).contains("[Parent](Tags/Parent.md)")) || (file.folder == "Materials/05 Queries and Bases" && list(note["keywords"]).contains("[Child](Tags/Child.md)"))'
+views:
+  - type: table
+    name: Tagged notes
+    order:
+      - file.name

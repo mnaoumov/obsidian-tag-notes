@@ -5,6 +5,7 @@ import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/pl
 import { PluginDataHandler } from '@mnaoumov/obsidian-lib/data-handler';
 import { PluginBase } from '@mnaoumov/obsidian-lib/plugin/plugin';
 import { PluginEventSourceImpl } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
+import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 
 import type { TagNotesApi } from '../api.d.ts';
 
@@ -12,6 +13,10 @@ import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PluginSettings } from './plugin-settings.ts';
 import { TagIndex } from './tag-index.ts';
+import {
+  TAG_TREE_VIEW_TYPE,
+  TagTreeView
+} from './tag-tree-view.ts';
 
 export class Plugin extends PluginBase {
   private readonly tagIndex = new TagIndex({
@@ -33,6 +38,22 @@ export class Plugin extends PluginBase {
   }
 
   protected override async onloadImpl(): Promise<void> {
+    this.registerView(TAG_TREE_VIEW_TYPE, (leaf) =>
+      new TagTreeView({
+        api: this.api,
+        leaf,
+        settings: (): PluginSettings => this.indexSettings,
+        showError: (error): void => {
+          this.pluginNoticeComponent.showNotice(String(error));
+        }
+      }));
+    this.addCommand({
+      callback: () => {
+        invokeAsyncSafely(() => this.openTagTree());
+      },
+      id: 'open-tag-tree',
+      name: 'Open tag tree'
+    });
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
         dataHandler: new PluginDataHandler(this),
@@ -54,6 +75,11 @@ export class Plugin extends PluginBase {
     const rebuild = (): void => {
       this.indexSettings = { ...pluginSettingsComponent.settings };
       this.tagIndex.rebuild();
+      for (const leaf of this.app.workspace.getLeavesOfType(TAG_TREE_VIEW_TYPE)) {
+        if (leaf.view instanceof TagTreeView) {
+          leaf.view.refresh();
+        }
+      }
     };
     this.app.workspace.onLayoutReady(rebuild);
     this.registerEvent(this.app.metadataCache.on('changed', rebuild));
@@ -79,5 +105,16 @@ export class Plugin extends PluginBase {
         pluginVersion: this.manifest.version
       })
     ]);
+  }
+
+  private async openTagTree(): Promise<void> {
+    const existing = this.app.workspace.getLeavesOfType(TAG_TREE_VIEW_TYPE)[0];
+    const leaf = existing ?? this.app.workspace.getLeftLeaf(false);
+    if (!leaf) {
+      return;
+    }
+
+    await leaf.setViewState({ active: true, type: TAG_TREE_VIEW_TYPE });
+    await this.app.workspace.revealLeaf(leaf);
   }
 }

@@ -1,8 +1,15 @@
+import type { TFile } from 'obsidian';
+
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+// eslint-disable-next-line import-x/no-namespace -- Spy on the real prompt without replacing the module.
+import * as prompts from '@mnaoumov/obsidian-lib/modals/prompt';
 import { findPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { Plugin as ObsidianPlugin } from 'obsidian';
-import { App } from 'obsidian-test-mocks/obsidian';
+import {
+  App,
+  Plugin as PluginHost
+} from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
   describe,
@@ -15,7 +22,14 @@ import type { TagNotesApi } from '../api.d.ts';
 
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { Plugin } from './plugin.ts';
+import {
+  TAG_TREE_VIEW_TYPE,
+  TagTreeView
+} from './tag-tree-view.ts';
 
+interface ChildHost {
+  readonly createChild: (tag: TFile) => Promise<void>;
+}
 interface SettingsHost {
   readonly pluginSettingsComponent: PluginSettingsComponent;
 }
@@ -29,6 +43,68 @@ afterEach(() => {
 });
 
 describe('TagNotes', () => {
+  it('registers and reuses the sidebar view, refreshes it on rebuild and handles an unavailable sidebar', async () => {
+    const app = App.createConfigured__({ files: { 'Tags/tag.md': '' } });
+    const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
+    plugins.push(plugin);
+    const onload = vi.spyOn(plugin, 'onload');
+    plugin.load();
+    await onload.mock.results[0]?.value;
+    const command = PluginHost.fromOriginalType2__(plugin).commands__.get('open-tag-tree');
+    command?.callback?.();
+    await vi.waitFor(() => {
+      expect(app.workspace.getLeavesOfType(TAG_TREE_VIEW_TYPE)).toHaveLength(1);
+    });
+    const leaf = app.workspace.getLeavesOfType(TAG_TREE_VIEW_TYPE)[0];
+    if (!leaf || !(leaf.view instanceof TagTreeView)) {
+      throw new Error('Tree missing');
+    }
+    const refresh = vi.spyOn(leaf.view, 'refresh');
+    const component = castTo<SettingsHost>(plugin).pluginSettingsComponent;
+    await component.editAndSave((settings) => {
+      settings.tagFolderPath = 'Other';
+    });
+    expect(refresh).toHaveBeenCalled();
+    expect(leaf.view.contentEl.textContent).toContain('No tag notes yet.');
+    command?.callback?.();
+    await vi.waitFor(() => {
+      expect(app.workspace.getLeavesOfType(TAG_TREE_VIEW_TYPE)).toHaveLength(1);
+    });
+    const notice = vi.spyOn(PluginNoticeComponent.prototype, 'showNotice');
+    const creator = PluginHost.fromOriginalType2__(plugin).views__.get(TAG_TREE_VIEW_TYPE);
+    const other = creator?.(app.workspace.getLeaf(false).asOriginalType3__());
+    if (!(other instanceof TagTreeView)) {
+      throw new TypeError('Creator missing');
+    }
+    await other.onOpen();
+    const open = vi.spyOn(app.workspace.getLeaf(false), 'openFile').mockRejectedValue(new Error('Cannot open'));
+    await component.editAndSave((settings) => {
+      settings.tagFolderPath = 'Tags';
+    });
+    other.refresh();
+    other.contentEl.querySelector('button.tag-notes-tag')?.dispatchEvent(new MouseEvent('click'));
+    await vi.waitFor(() => {
+      expect(notice).toHaveBeenCalledWith('Error: Cannot open');
+    });
+    open.mockRestore();
+    vi.spyOn(prompts, 'prompt').mockResolvedValue('New');
+    const parent = app.vault.getFileByPath('Tags/tag.md');
+    if (!parent) {
+      throw new Error('Tag missing');
+    }
+    await castTo<ChildHost>(other).createChild(parent.asOriginalType2__());
+    expect(app.vault.getFileByPath('Tags/New.md')).not.toBeNull();
+    vi.spyOn(app.workspace, 'getLeavesOfType').mockReturnValue([app.workspace.getLeaf(false)]);
+    await component.editAndSave((settings) => {
+      settings.tagFolderPath = 'Other';
+    });
+    vi.mocked(app.workspace.getLeavesOfType).mockReturnValue([]);
+    vi.spyOn(app.workspace, 'getLeftLeaf').mockReturnValue(null);
+    command?.callback?.();
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, 0);
+    });
+  });
   it('reports hierarchy cycles through the plugin notice component', async () => {
     const app = App.createConfigured__({ files: { 'Tags/a.md': '', 'Tags/b.md': '' } });
     vi.spyOn(app.metadataCache, 'getFileCache').mockImplementation((file) => {

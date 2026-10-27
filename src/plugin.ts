@@ -18,6 +18,8 @@ import {
   TAG_TREE_VIEW_TYPE,
   TagTreeView
 } from './tag-tree-view.ts';
+import { TagPicker } from './tagging/tag-picker.ts';
+import { TagSuggest } from './tagging/tag-suggest.ts';
 
 export class Plugin extends PluginBase {
   private readonly tagIndex = new TagIndex({
@@ -39,6 +41,27 @@ export class Plugin extends PluginBase {
   }
 
   protected override async onloadImpl(): Promise<void> {
+    const picker = new TagPicker({
+      api: this.api,
+      app: this.app,
+      settings: (): PluginSettings => this.indexSettings,
+      showError: (error): void => {
+        this.pluginNoticeComponent.showNotice(String(error));
+      }
+    });
+    this.registerEditorSuggest(new TagSuggest(this.app, picker, (): PluginSettings => this.indexSettings));
+    this.addCommand({
+      editorCallback: (editor, view): void => {
+        if (!view.file) {
+          return;
+        }
+
+        const cursor = editor.getCursor();
+        picker.open({ editor, end: cursor, file: view.file, start: cursor, text: '' });
+      },
+      id: 'tag-this-note',
+      name: 'Tag this note'
+    });
     this.addCommand({
       callback: () => {
         new MigrationModal({

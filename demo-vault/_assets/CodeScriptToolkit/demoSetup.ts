@@ -5,6 +5,16 @@ export async function setTagsPropertyName(app: App, value: string): Promise<void
   await configureCommunityPlugin({ app, pluginId: 'tag-notes', settings: { tagsPropertyName: value } });
 }
 
+export async function prepareTagging(app: App, insertBodyLink = false): Promise<string> {
+  await configureCommunityPlugin({ app, pluginId: 'tag-notes', settings: { tagsPropertyName: 'keywords', tagFolderPath: 'Materials/04 Tag this note/Tags', suggestTrigger: '@', insertBodyLink } });
+  const source = app.vault.getFileByPath('Materials/04 Tag this note/Source.md');
+  if (!source) {
+    throw new Error('Tagging source is missing.');
+  }
+  await app.vault.modify(source, '# Source\n\nTry typing a tag note here: ');
+  return 'Ready. Open Source, type @First after a space, and choose Alpha.';
+}
+
 export async function prepareMigration(app: App): Promise<string> {
   await configureCommunityPlugin({ app, pluginId: 'tag-notes', settings: { tagsPropertyName: 'keywords', parentPropertyName: 'broader', tagFolderPath: 'Materials/03 Convert tags/Tags', inlineTagConversion: 'link' } });
   const source = app.vault.getFileByPath('Materials/03 Convert tags/Source.md');

@@ -30,8 +30,12 @@ interface BindingParams {
   readonly valueComponent: TextComponent;
 }
 
+interface ValueSetter {
+  readonly setValue: (value: unknown) => void;
+}
+
 describe('PluginSettingsTab', () => {
-  it('renders three bound text settings with defaults', async () => {
+  it('renders four bound text settings with defaults', async () => {
     const app = App.createConfigured__();
     const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
     const component = new PluginSettingsComponent({
@@ -42,7 +46,7 @@ describe('PluginSettingsTab', () => {
     const tab = new PluginSettingsTab({ plugin, pluginSettingsComponent: component });
     // This tests our declarative bindings; the library owns the binding implementation.
     vi.spyOn(castTo<BindingHost>(tab), 'bind').mockImplementation(({ propertyName, valueComponent }) => {
-      valueComponent.setValue(component.settings[propertyName]);
+      castTo<ValueSetter>(valueComponent).setValue(component.settings[propertyName]);
     });
     const group = new SettingGroup(tab.containerEl);
     for (const definition of tab.getSettingDefinitions()) {
@@ -50,8 +54,8 @@ describe('PluginSettingsTab', () => {
         definition.render(new Setting(tab.containerEl), group);
       }
     }
-    expect(tab.containerEl.querySelectorAll('input')).toHaveLength(3);
-    expect([...tab.containerEl.querySelectorAll('input')].map((input) => input.value)).toEqual(['keywords', 'Tags', 'broader']);
+    expect(tab.containerEl.querySelectorAll<HTMLInputElement>('input')).toHaveLength(4);
+    expect([...tab.containerEl.querySelectorAll<HTMLInputElement>('input')].map((input) => input.value)).toEqual(['keywords', 'Tags', 'broader', '@']);
     tab.hide();
   });
 });

@@ -2,9 +2,9 @@
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/mnaoumov) [![GitHub release](https://img.shields.io/github/v/release/mnaoumov/obsidian-tag-notes)](https://github.com/mnaoumov/obsidian-tag-notes/releases) [![GitHub downloads](https://img.shields.io/github/downloads/mnaoumov/obsidian-tag-notes/total)](https://github.com/mnaoumov/obsidian-tag-notes/releases)
 
-Make every tag a note: tag a note with links in a list property, organize tag notes through parent links, browse their tree and counts, and convert existing tags with a preview. Typing assistance is still in development.
+Make every tag a note: tag a note with links in a list property, organize tag notes through parent links, browse their tree and counts, and convert existing tags with a preview. Choose or create tag notes with **Tag this note** or by typing `@`.
 
-See [the tag index and API](<./demo-vault/01 Tag index.md>), [settings](<./demo-vault/02 Settings.md>) and [converting existing tags](<./demo-vault/03 Convert tags.md>).
+See [the tag index and API](<./demo-vault/01 Tag index.md>), [settings](<./demo-vault/02 Settings.md>), [converting existing tags](<./demo-vault/03 Convert tags.md>) and [tagging while writing](<./demo-vault/04 Tag this note.md>).
 
 ## Demo vault
 

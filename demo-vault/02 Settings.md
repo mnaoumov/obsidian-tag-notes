@@ -17,6 +17,15 @@ The two properties must differ and cannot use the core `tags` name, which Obsidi
 
 `inlineTagConversion` controls how **Convert tags** handles body tags: `keep` leaves them in place, `link` replaces each with a link (the default), and `remove` deletes them. Every mode adds links to the note's tags property. The setting applies only to the migration, which requires a preview and confirmation.
 
+## Typing assistance
+
+1. `suggestTrigger`
+   1. defaults to `@`. Type it at a word boundary, followed by a tag name or alias. Core claims `#` before plugin suggestions, so choose another non-empty trigger without whitespace.
+2. `insertBodyLink`
+   1. defaults to `false`. When enabled, choosing a tag inserts a body mention instead of adding a property link. It applies to both the command and inline suggestions. Body mentions do not tag the note.
+
+See [Tag this note](<./04 Tag this note.md>) to try both actions.
+
 ## Try a different property
 
 ```code-button

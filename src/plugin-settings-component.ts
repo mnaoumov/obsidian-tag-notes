@@ -35,5 +35,8 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('inlineTagConversion', (value) => {
       return ['keep', 'link', 'remove'].includes(value) ? undefined : 'Choose keep, link or remove.';
     });
+    this.registerValidator('suggestTrigger', (value) => {
+      return !value || /[\s\p{Cc}]/u.test(value) ? 'Choose a non-empty trigger without spaces.' : undefined;
+    });
   }
 }

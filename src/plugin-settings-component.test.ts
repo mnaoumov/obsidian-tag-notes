@@ -31,6 +31,9 @@ describe('PluginSettingsComponent', () => {
     expect(await component.setProperty('parentPropertyName', 'up')).toBe('');
     expect(await component.setProperty('tagsPropertyName', 'topics')).toBe('');
     expect(component.settings.tagsPropertyName).toBe('topics');
+    expect(await component.setProperty('suggestTrigger', '')).toBeTruthy();
+    expect(await component.setProperty('suggestTrigger', 'two words')).toBeTruthy();
+    expect(await component.setProperty('suggestTrigger', '::')).toBe('');
   });
   it('takes its defaults from the PluginSettings class', async () => {
     const component = createComponent(undefined);

@@ -4,10 +4,12 @@ import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-
 // eslint-disable-next-line import-x/no-namespace -- Spy on the real prompt without replacing the module.
 import * as prompts from '@mnaoumov/obsidian-lib/modals/prompt';
 import { findPluginApi } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
+import { noop } from '@mnaoumov/typescript-lib/function';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import { Plugin as ObsidianPlugin } from 'obsidian';
 import {
   App,
+  MarkdownView,
   Plugin as PluginHost
 } from 'obsidian-test-mocks/obsidian';
 import {
@@ -26,6 +28,8 @@ import {
   TAG_TREE_VIEW_TYPE,
   TagTreeView
 } from './tag-tree-view.ts';
+import { TagPicker } from './tagging/tag-picker.ts';
+import { TagSuggest } from './tagging/tag-suggest.ts';
 
 interface ChildHost {
   readonly createChild: (tag: TFile) => Promise<void>;
@@ -43,6 +47,34 @@ afterEach(() => {
 });
 
 describe('TagNotes', () => {
+  it('opens Tag this note only for a saved editor and reports selection errors', async () => {
+    const app = App.createConfigured__({ files: { 'Source.md': 'Text ', 'Tags/Alpha.md': '' } });
+    const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
+    plugins.push(plugin);
+    const onload = vi.spyOn(plugin, 'onload');
+    plugin.load();
+    await onload.mock.results[0]?.value;
+    const host = PluginHost.fromOriginalType2__(plugin);
+    const command = host.commands__.get('tag-this-note');
+    const view = new MarkdownView(app.workspace.getLeaf(false));
+    const open = vi.spyOn(TagPicker.prototype, 'open').mockImplementation(noop);
+    command?.editorCallback?.(view.editor.asOriginalType__(), view.asOriginalType7__());
+    expect(open).not.toHaveBeenCalled();
+    view.file = app.vault.getFileByPath('Source.md');
+    view.editor.setValue('Text ');
+    command?.editorCallback?.(view.editor.asOriginalType__(), view.asOriginalType7__());
+    expect(open).toHaveBeenCalledOnce();
+    const suggest = castTo<TagSuggest>(host.editorSuggests__[0]);
+    const notice = vi.spyOn(PluginNoticeComponent.prototype, 'showNotice');
+    if (!view.file) {
+      throw new Error('Source missing');
+    }
+    suggest.context = { editor: view.editor.asOriginalType__(), end: { ch: 0, line: 0 }, file: view.file.asOriginalType2__(), query: 'Alpha', start: { ch: 0, line: 0 } };
+    suggest.selectSuggestion({ file: null, name: 'Alpha' });
+    await vi.waitFor(() => {
+      expect(notice).toHaveBeenCalledWith(expect.stringContaining('note changed'));
+    });
+  });
   it('registers and reuses the sidebar view, refreshes it on rebuild and handles an unavailable sidebar', async () => {
     const app = App.createConfigured__({ files: { 'Tags/tag.md': '' } });
     const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });

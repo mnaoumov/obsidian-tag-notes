@@ -20,3 +20,4 @@ Manual equivalent: create two tag notes, link the parent from the child's `broad
 1. [01 Tag index](<./01 Tag index.md>): relationships, distinct counts and the scripting API.
 2. [02 Settings](<./02 Settings.md>): property names and the tag folder.
 3. [03 Convert tags](<./03 Convert tags.md>): preview and convert existing inline and property tags.
+4. [04 Tag this note](<./04 Tag this note.md>): choose by name or alias, create tags, and insert body mentions.

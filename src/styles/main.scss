@@ -1,16 +1,14 @@
-/**
- * You can remove this file if you don't need any styles
- * See default library styles: https://github.com/mnaoumov/obsidian-lib/blob/main/src/styles/main.scss
- * See available library css classes: https://github.com/mnaoumov/obsidian-lib/blob/main/src/css-class.ts
- */
-
-.tag-notes.obsidian-lib {
-  /* Override library styles */
-}
-
-/* The word-count widget the sample editor extension renders. Styled here rather than through
-   `element.style`, so a theme can restyle it. */
-.cm-sample-word-count {
-  font-size: 0.85em;
-  opacity: 0.5;
+.tag-notes-view {
+  .tag-notes-controls, .tag-notes-tree-row {
+    display: flex;
+    align-items: center;
+    gap: var(--size-2-2);
+  }
+  .tag-notes-controls input { min-width: 0; width: 100%; }
+  .tag-notes-legend, .tag-notes-counts { color: var(--text-muted); font-size: var(--font-smallest); }
+  .tag-notes-children { padding-inline-start: var(--size-4-4); }
+  .tag-notes-tree-row { padding-block: var(--size-2-1); }
+  .tag-notes-tag { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .tag-notes-counts { white-space: nowrap; }
+  .tag-notes-note { display: block; margin-block: var(--size-2-2); max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 }

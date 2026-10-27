@@ -16,12 +16,12 @@ import { PluginSettings } from './plugin-settings.ts';
 import { TagIndex } from './tag-index.ts';
 
 interface Fixture {
-  add: (path: string, properties?: Record<string, unknown>) => TFile;
-  caches: Map<TFile, CachedMetadata>;
-  files: TFile[];
-  index: TagIndex;
-  reportCycle: ReturnType<typeof vi.fn>;
-  settings: PluginSettings;
+  readonly add: (path: string, properties?: Record<string, unknown>) => TFile;
+  readonly caches: Map<TFile, CachedMetadata>;
+  readonly files: TFile[];
+  readonly index: TagIndex;
+  readonly reportCycle: ReturnType<typeof vi.fn>;
+  readonly settings: PluginSettings;
 }
 
 function fixture(): Fixture {

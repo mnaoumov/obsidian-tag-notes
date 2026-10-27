@@ -40,6 +40,7 @@ interface ViewHost {
   readonly createChild: (tag: TFile) => Promise<void>;
   readonly rename: (tag: TFile) => Promise<void>;
   readonly renderResults: () => void;
+  // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests clear the view's results element to exercise rendering before initialization.
   resultsEl: HTMLElement | null;
   readonly showMenu: (tag: TFile, event: MouseEvent) => void;
   readonly validateName: (name: string) => string | undefined;

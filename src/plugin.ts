@@ -9,6 +9,7 @@ import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 
 import type { TagNotesApi } from '../api.d.ts';
 
+import { MigrationModal } from './migrations/migration-modal.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PluginSettings } from './plugin-settings.ts';
@@ -38,6 +39,19 @@ export class Plugin extends PluginBase {
   }
 
   protected override async onloadImpl(): Promise<void> {
+    this.addCommand({
+      callback: () => {
+        new MigrationModal({
+          app: this.app,
+          settings: this.indexSettings,
+          showNotice: (message): void => {
+            this.pluginNoticeComponent.showNotice(message);
+          }
+        }).open();
+      },
+      id: 'convert-tags',
+      name: 'Convert tags'
+    });
     this.registerView(TAG_TREE_VIEW_TYPE, (leaf) =>
       new TagTreeView({
         api: this.api,

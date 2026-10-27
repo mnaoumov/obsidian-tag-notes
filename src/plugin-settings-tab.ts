@@ -11,7 +11,7 @@ import type { PluginSettings } from './plugin-settings.ts';
  */
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
-    return ([
+    const rows = ([
       { desc: 'List property containing links to tag notes. The core tags property cannot index links.', name: 'Tags property', property: 'tagsPropertyName' },
       { desc: 'Folder for new tag notes. Its unused notes also appear as tags. Leave empty to use the vault root.', name: 'Tag folder', property: 'tagFolderPath' },
       { desc: 'List property containing links to broader tag notes. Several parents are allowed.', name: 'Parent property', property: 'parentPropertyName' }
@@ -26,5 +26,16 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
         }
       })
     );
+    rows.push(this.settingEx({
+      desc: 'Keep leaves inline tags in place, Link replaces them with tag note links, and Remove deletes them. All three add tag note links to the tags property.',
+      name: 'Inline tag conversion',
+      render: (setting) => {
+        setting.addDropdown((dropdown) => {
+          dropdown.addOptions({ keep: 'Keep', link: 'Link', remove: 'Remove' });
+          this.bind({ propertyName: 'inlineTagConversion', valueComponent: dropdown });
+        });
+      }
+    }));
+    return rows;
   }
 }

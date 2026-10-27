@@ -13,6 +13,10 @@ The two properties must differ and cannot use the core `tags` name, which Obsidi
 
 `tagFolderPath` defaults to `Tags`. Notes in this folder and its subfolders appear as tag notes even before anything tags them. Linked tag notes outside the folder are included too. An empty folder path includes the vault root. Use a vault-relative path with forward slashes, without `.` or `..` segments.
 
+## Inline tag conversion
+
+`inlineTagConversion` controls how **Convert tags** handles body tags: `keep` leaves them in place, `link` replaces each with a link (the default), and `remove` deletes them. Every mode adds links to the note's tags property. The setting applies only to the migration, which requires a preview and confirmation.
+
 ## Try a different property
 
 ```code-button

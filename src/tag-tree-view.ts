@@ -135,9 +135,9 @@ export class TagTreeView extends ItemView {
         this.selectedTag = tag;
         this.renderResults();
       });
-      row.addEventListener('contextmenu', (event): void => {
-        event.preventDefault();
-        this.showMenu(tag, event);
+      row.addEventListener('contextmenu', ($event): void => {
+        $event.preventDefault();
+        this.showMenu(tag, $event);
       });
       if (!isExpanded) {
         continue;
@@ -204,7 +204,7 @@ export class TagTreeView extends ItemView {
     invokeAsyncSafely(() => action().catch(this.showError));
   }
 
-  private showMenu(tag: TFile, event: MouseEvent): void {
+  private showMenu(tag: TFile, $event: MouseEvent): void {
     const menu = new Menu();
     menu.addItem((item) =>
       item.setTitle('Rename').setIcon('pencil').onClick(() => {
@@ -221,7 +221,7 @@ export class TagTreeView extends ItemView {
         this.run(() => revealInFileExplorer({ abstractFile: tag, app: this.app }));
       })
     );
-    menu.showAtMouseEvent(event);
+    menu.showAtMouseEvent($event);
   }
 
   private sortTags(tags: TFile[]): TFile[] {

@@ -1,6 +1,11 @@
 import type { App } from 'obsidian';
 import { configureCommunityPlugin } from '@mnaoumov/obsidian-lib/community-plugins';
 
+export async function prepareQueries(app: App): Promise<string> {
+  await configureCommunityPlugin({ app, pluginId: 'tag-notes', settings: { tagsPropertyName: 'keywords', parentPropertyName: 'broader', tagFolderPath: 'Materials/05 Queries and Bases/Tags' } });
+  return 'Ready. The subtree block shows Direct and Nested; the direct block shows Direct only. Run Tag Notes: Copy Bases filter for tag subtree to export Parent.';
+}
+
 export async function setTagsPropertyName(app: App, value: string): Promise<void> {
   await configureCommunityPlugin({ app, pluginId: 'tag-notes', settings: { tagsPropertyName: value } });
 }

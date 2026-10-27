@@ -55,7 +55,7 @@ export const configs: Linter.Config[] = defineEslintConfigs({
           'obsidianmd/ui/sentence-case': [
             'error',
             {
-              brands: ['Tag Notes']
+              brands: ['Tag Notes', 'Bases']
             }
           ]
         }

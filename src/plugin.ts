@@ -13,6 +13,8 @@ import { MigrationModal } from './migrations/migration-modal.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
 import { PluginSettings } from './plugin-settings.ts';
+import { BasesFilterModal } from './queries/bases-filter-modal.ts';
+import { TagNotesBlock } from './queries/tag-notes-block.ts';
 import { TagIndex } from './tag-index.ts';
 import {
   TAG_TREE_VIEW_TYPE,
@@ -34,13 +36,40 @@ export class Plugin extends PluginBase {
   Read-only queries for `Dataview` and scripts; also published through the plugin API registry.
   */
   public readonly api: TagNotesApi = this.tagIndex;
+
   private indexSettings = new PluginSettings();
+  private readonly queryBlocks = new Set<TagNotesBlock>();
 
   protected override getPluginApis(): PluginApiDeclaration[] {
     return [{ api: this.api, apiVersion: '1.0.0' }];
   }
 
   protected override async onloadImpl(): Promise<void> {
+    this.registerMarkdownCodeBlockProcessor('tag-notes', (source, element, context) => {
+      const block = new TagNotesBlock({ api: this.api, app: this.app, containerEl: element, source, sourcePath: context.sourcePath });
+      this.queryBlocks.add(block);
+      block.register(() => {
+        this.queryBlocks.delete(block);
+      });
+      context.addChild(block);
+    });
+    this.register(() => {
+      this.queryBlocks.clear();
+    });
+    this.addCommand({
+      callback: () => {
+        new BasesFilterModal({
+          api: this.api,
+          app: this.app,
+          settings: (): PluginSettings => this.indexSettings,
+          showNotice: (message): void => {
+            this.pluginNoticeComponent.showNotice(message);
+          }
+        }).open();
+      },
+      id: 'copy-bases-filter',
+      name: 'Copy Bases filter for tag subtree'
+    });
     const picker = new TagPicker({
       api: this.api,
       app: this.app,
@@ -112,6 +141,9 @@ export class Plugin extends PluginBase {
     const rebuild = (): void => {
       this.indexSettings = { ...pluginSettingsComponent.settings };
       this.tagIndex.rebuild();
+      for (const block of this.queryBlocks) {
+        block.refresh();
+      }
       for (const leaf of this.app.workspace.getLeavesOfType(TAG_TREE_VIEW_TYPE)) {
         if (leaf.view instanceof TagTreeView) {
           leaf.view.refresh();

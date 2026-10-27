@@ -37,15 +37,15 @@ export class TagNotesBlock extends MarkdownRenderChild {
   }
 
   public override onload(): void {
-    this.registerDomEvent(this.containerEl, 'click', (event) => {
-      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a.internal-link') : null;
+    this.registerDomEvent(this.containerEl, 'click', ($event) => {
+      const link = $event.target instanceof Element ? $event.target.closest<HTMLAnchorElement>('a.internal-link') : null;
       const path = link?.dataset['href'];
       if (!path) {
         return;
       }
 
-      event.preventDefault();
-      invokeAsyncSafely(() => this.app.workspace.openLinkText(path, this.sourcePath, Keymap.isModEvent(event)));
+      $event.preventDefault();
+      invokeAsyncSafely(() => this.app.workspace.openLinkText(path, this.sourcePath, Keymap.isModEvent($event)));
     });
     this.refresh();
   }

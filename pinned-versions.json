@@ -29,6 +29,19 @@
       "manualCheck": "The check reads the range declared by the @wdio/utils that obsidian-integration-testing reaches, nested under it when the project also has a newer wdio, which is what forces the override. When it moves to ^8 or later the override and this entry can go. Before lifting it, re-run the deepmergeCustom probe: @wdio/config passes a `mergeArrays` handler that reads `meta.key`, and that is the API 8.0.0 renamed.",
       "section": "overrides",
       "why": "Clears GHSA-ggr8-5vv4-36mx (stack exhaustion merging recursive object graphs), patched in 8.0.0. @wdio/utils declares ^7.0.3 up to 9.30, and obsidian-integration-testing pins webdriverio 9.27.0, so no direct bump reaches it and `npm audit fix --force` only offers a downgrade of obsidian-integration-testing to 1.1.2. The forced major is safe for these consumers: 8.0.0 breaks by renaming the mergeInfo system and aligning the customization shorthand, and both surfaces were measured to behave identically on 7.1.6 and 8.0.1 in the exact shapes the tree uses -- @wdio/config's `deepmergeCustom` with a `mergeArrays` handler reading `meta.key` and returning `utils.actions.defaultMerge`, and webdriver's `deepmergeCustom({ mergeArrays: false })`. A scan of the whole installed tree found no other binding than `deepmerge` and `deepmergeCustom`."
+    },
+    "katex": {
+      "why": "Clears GHSA-238p-pmpm-9mq7, patched in 0.18.2. micromark-extension-math 3.1.0 still requests ^0.16.0. Verify its renderToString API using inline and display math through micromark.",
+      "manualCheck": "Remove the override and matching resolution once micromark-extension-math resolves a patched KaTeX without them; verify inline and display math rendering.",
+      "section": "overrides",
+      "expect": "^0.16.0",
+      "check": "node -e \"process.stdout.write(require('./node_modules/micromark-extension-math/package.json').dependencies.katex)\""
+    },
+    "obsidian": {
+      "why": "Clears GHSA-4p3w-j4w9-5jqw by replacing eslint-plugin-obsidianmd pinned Obsidian 1.12.3 types (Moment 2.29.4) with the direct Obsidian types (1.14.4, Moment 2.31.0). The override references the direct dependency.",
+      "section": "overrides",
+      "manualCheck": "Inspect eslint-plugin-obsidianmd dependencies and run npm audit without this override and its matching resolution. Remove both once its Obsidian dependency resolves Moment >=2.31.0 naturally.",
+      "check": null
     }
   }
 }

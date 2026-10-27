@@ -1,16 +1,37 @@
-import type { Editor } from 'obsidian';
+import type { PluginApiDeclaration } from '@mnaoumov/obsidian-lib/plugin/plugin-api';
 
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
 import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/plugin-settings-tab-component';
 import { PluginDataHandler } from '@mnaoumov/obsidian-lib/data-handler';
 import { PluginBase } from '@mnaoumov/obsidian-lib/plugin/plugin';
 import { PluginEventSourceImpl } from '@mnaoumov/obsidian-lib/plugin/plugin-event-source';
-import { Notice } from 'obsidian';
+
+import type { TagNotesApi } from '../api.d.ts';
 
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
+import { PluginSettings } from './plugin-settings.ts';
+import { TagIndex } from './tag-index.ts';
 
 export class Plugin extends PluginBase {
+  private readonly tagIndex = new TagIndex({
+    app: this.app,
+    reportCycle: (paths): void => {
+      this.pluginNoticeComponent.showNotice(`Tag hierarchy cycle ignored: ${paths.join(' → ')}`);
+    },
+    settings: (): PluginSettings => this.indexSettings
+  });
+
+  /**
+  Read-only queries for `Dataview` and scripts; also published through the plugin API registry.
+  */
+  public readonly api: TagNotesApi = this.tagIndex;
+  private indexSettings = new PluginSettings();
+
+  protected override getPluginApis(): PluginApiDeclaration[] {
+    return [{ api: this.api, apiVersion: '1.0.0' }];
+  }
+
   protected override async onloadImpl(): Promise<void> {
     const pluginSettingsComponent = this.addChild(
       new PluginSettingsComponent({
@@ -30,16 +51,20 @@ export class Plugin extends PluginBase {
       })
     );
 
-    this.addCommand({
-      callback: this.runSampleCommand.bind(this),
-      id: 'sample',
-      name: 'Sample'
-    });
-
-    this.addCommand({
-      editorCallback: this.runSampleEditorCommand.bind(this),
-      id: 'sample-editor',
-      name: 'Sample editor'
+    const rebuild = (): void => {
+      this.indexSettings = { ...pluginSettingsComponent.settings };
+      this.tagIndex.rebuild();
+    };
+    this.app.workspace.onLayoutReady(rebuild);
+    this.registerEvent(this.app.metadataCache.on('changed', rebuild));
+    this.registerEvent(this.app.metadataCache.on('deleted', rebuild));
+    this.registerEvent(this.app.metadataCache.on('resolved', rebuild));
+    this.registerEvent(this.app.vault.on('rename', rebuild));
+    const saveRef = pluginSettingsComponent.on('saveSettings', rebuild);
+    const loadRef = pluginSettingsComponent.on('loadSettings', rebuild);
+    this.register(() => {
+      pluginSettingsComponent.offref(saveRef);
+      pluginSettingsComponent.offref(loadRef);
     });
 
     // `OpenDemoVaultCommandHandler` is what makes the README's first demo-vault route real: it downloads
@@ -54,13 +79,5 @@ export class Plugin extends PluginBase {
         pluginVersion: this.manifest.version
       })
     ]);
-  }
-
-  private runSampleCommand(): void {
-    new Notice('Sample command');
-  }
-
-  private runSampleEditorCommand(editor: Editor): void {
-    editor.replaceSelection('Sample Editor Command');
   }
 }

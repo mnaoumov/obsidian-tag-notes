@@ -26,7 +26,15 @@ None of them makes the note the tag. That inversion is this plugin's whole scope
 
 ## Current state
 
-The repo was generated on 2026-10-26 with `create-obsidian-plugin` (preset `all-in-one`, CSS, desktop and mobile, the unofficial API subset, no editor extensions). Its answers are in `.create-obsidian-plugin.json`, so re-running the generator in this folder updates every file not edited by hand. `src/` is still the generated sample; nothing below is built yet.
+The repo was generated on 2026-10-26 with `create-obsidian-plugin` (preset `all-in-one`, CSS, desktop and mobile, the unofficial API subset, no editor extensions). Its answers are in `.create-obsidian-plugin.json`, so re-running the generator in this folder updates every file not edited by hand.
+
+The metadata index, three validated settings and version 1 API are implemented. `src/tag-index.ts` reads only metadata-cache frontmatter links; it never writes notes. `src/plugin.ts` wires layout-ready, metadata changed/deleted/resolved, rename and settings events. The generated sample commands and setting have been removed. The tree, migration, suggester, code block and Bases command remain unimplemented.
+
+The current index rebuilds the graph from the metadata cache on each event and invalidates all descendant caches. This conservative invalidation handles link-resolution changes outside the edited subtree, including an unresolved target becoming available. Descendants are cached on demand between rebuilds; traversals are iterative. Parent targets reached through `broader` are included even outside the configured folder. Edges are considered in sorted note-path order, with each cyclic closing edge excluded. An unchanged cycle is reported once; repairing it permits a later recurrence to be reported again.
+
+The self-contained root `api.d.ts` is the consumer contract. The plugin publishes it through `obsidian-lib`'s registry under `tag-notes`, API version `1.0.0`; the same API is available at `app.plugins.plugins['tag-notes'].api`. Returned arrays are copies. Unknown files return empty relationships and zero counts; callers use current vault `TFile` objects. The API is empty until the initial metadata/layout and settings load complete.
+
+Verification: `npm run gate` includes the 100% unit-coverage threshold. Unit workers are capped at two. `npm run test:integration:desktop` exercises real link resolution, counts, changes, renames, deletion, reload and cycle handling in an isolated vault. Set `OBSIDIAN_VERSION` to select a particular installed/public/catalyst channel.
 
 ## Design
 
@@ -41,11 +49,11 @@ The repo was generated on 2026-10-26 with `create-obsidian-plugin` (preset `all-
 
 ### The index
 
-One in-memory index, rebuilt from the metadata cache at layout ready and kept current from `metadataCache` `changed`/`deleted` and vault `rename` events:
+One in-memory index, rebuilt from the metadata cache at layout ready and kept current from `metadataCache` `changed`/`deleted`/`resolved`, vault `rename` and settings events:
 
 - tag note to the notes tagged with it directly, and the reverse;
 - tag note to its parents and children;
-- for every tag note, its descendant set, computed on demand and cached until the next change under it.
+- for every tag note, its descendant set, computed on demand and cached until the next index rebuild.
 
 Counts are reported both ways, **direct** and **with descendants** (distinct notes, so a note tagged with a parent and a child counts once). The index never writes a file.
 

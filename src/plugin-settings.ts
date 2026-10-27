@@ -1,3 +1,5 @@
 export class PluginSettings {
-  public textSetting = 'defaultText';
+  public parentPropertyName = 'broader';
+  public tagFolderPath = 'Tags';
+  public tagsPropertyName = 'keywords';
 }

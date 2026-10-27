@@ -23,5 +23,14 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
       ...params,
       pluginSettingsClass: PluginSettings
     });
+    this.registerValidator('tagsPropertyName', (value, settings) => {
+      return !value.trim() || value.toLowerCase() === 'tags' || value === settings.parentPropertyName ? 'Choose a non-empty property other than tags or the parent property.' : undefined;
+    });
+    this.registerValidator('parentPropertyName', (value, settings) => {
+      return !value.trim() || value.toLowerCase() === 'tags' || value === settings.tagsPropertyName ? 'Choose a non-empty property other than tags or the tags property.' : undefined;
+    });
+    this.registerValidator('tagFolderPath', (value) => {
+      return value.split('/').some((part) => part === '..' || part === '.') || /[\\:*?"<>|]/u.test(value) ? 'Use a vault-relative folder path with forward slashes.' : undefined;
+    });
   }
 }

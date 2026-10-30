@@ -129,6 +129,15 @@ describe('TagNotes', () => {
       expect(notice).toHaveBeenCalledWith(expect.stringContaining('note changed'));
     });
   });
+  it('registers the report bug command', async () => {
+    const app = App.createConfigured__();
+    const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
+    plugins.push(plugin);
+    const onload = vi.spyOn(plugin, 'onload');
+    plugin.load();
+    await onload.mock.results[0]?.value;
+    expect(PluginHost.fromOriginalType2__(plugin).commands__.get('report-bug')).toBeDefined();
+  });
   it('registers and reuses the sidebar view, refreshes it on rebuild and handles an unavailable sidebar', async () => {
     const app = App.createConfigured__({ files: { 'Tags/tag.md': '' } });
     const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });

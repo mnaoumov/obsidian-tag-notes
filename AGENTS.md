@@ -2,6 +2,12 @@
 
 This file provides guidance to AI coding agents working with code in this repository.
 
+## Filing an issue (for AI agents and humans)
+
+Open issues through the [issue forms](https://github.com/mnaoumov/obsidian-tag-notes/issues/new/choose), not as blank issues.
+
+Filing from the CLI or the API (`gh issue create --body`, or an AI agent filing for you) skips the form, and `gh issue create --template` cannot load an issue form. In that case, open the matching form in [`.github/ISSUE_TEMPLATE/`](https://github.com/mnaoumov/obsidian-tag-notes/tree/HEAD/.github/ISSUE_TEMPLATE), copy every field as a `### <label>` heading in the form's order, and fill in each one. Always state the plugin version, the Obsidian version and your operating system.
+
 ## Overview
 
 `Tag Notes` makes a tag a **note**. A note is tagged by **linking** that tag note from a list property, and the plugin gives tag notes what `#tags` and the core Tags pane give `#tags`: a hierarchy, a tree with counts, "notes tagged X or anything under X", fast typing, and a one-shot migration from existing `#tags`.

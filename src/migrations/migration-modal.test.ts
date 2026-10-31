@@ -11,6 +11,8 @@ import {
   vi
 } from 'vitest';
 
+import type { RunBulkOperationParams } from './migration-modal.ts';
+
 import { PluginSettings } from '../plugin-settings.ts';
 import { Plugin } from '../plugin.ts';
 import { MigrationModal } from './migration-modal.ts';
@@ -33,10 +35,14 @@ function click(modal: MigrationModal, label: string): void {
   button.click();
 }
 
+async function passThrough(params: RunBulkOperationParams): Promise<void> {
+  await params.operation();
+}
+
 it('requires a preview and explicit confirmation before changing notes, and ignores duplicate clicks', async () => {
   const app = App.createConfigured__({ files: { 'alpha.md': '#alpha/bravo' } });
   const showNotice = vi.fn();
-  const modal = new MigrationModal({ app: app.asOriginalType__(), settings: new PluginSettings(), showNotice });
+  const modal = new MigrationModal({ app: app.asOriginalType__(), runBulkOperation: passThrough, settings: new PluginSettings(), showNotice });
   modal.onOpen();
   expect([...modal.contentEl.querySelectorAll('button')].some((button) => button.textContent === 'Convert')).toBe(false);
   click(modal, 'Preview');
@@ -55,7 +61,7 @@ it('requires a preview and explicit confirmation before changing notes, and igno
 it('clears a preview when scope changes, handles empty folders and reports preview and write errors', async () => {
   const app = App.createConfigured__({ files: { 'alpha.md': '', 'Folder/note.md': '#alpha' } });
   const showNotice = vi.fn();
-  const modal = new MigrationModal({ app: app.asOriginalType__(), settings: new PluginSettings(), showNotice });
+  const modal = new MigrationModal({ app: app.asOriginalType__(), runBulkOperation: passThrough, settings: new PluginSettings(), showNotice });
   modal.onOpen();
   const input = modal.contentEl.querySelector('input');
   if (!input) {
@@ -97,7 +103,7 @@ it('clears a preview when scope changes, handles empty folders and reports previ
 
 it('lists reused parent and collision notes among the notes to update', async () => {
   const app = App.createConfigured__({ files: { 'bravo (alpha).md': '', 'charlie.md': '', 'source.md': '#alpha/bravo #charlie/bravo' } });
-  const modal = new MigrationModal({ app: app.asOriginalType__(), settings: new PluginSettings(), showNotice: vi.fn() });
+  const modal = new MigrationModal({ app: app.asOriginalType__(), runBulkOperation: passThrough, settings: new PluginSettings(), showNotice: vi.fn() });
   modal.onOpen();
   click(modal, 'Preview');
   await vi.waitFor(() => {
@@ -139,7 +145,7 @@ it('discards a preview if the folder changes while it is still being built', asy
     resolvePlan = resolve;
   });
   vi.spyOn(TagMigration.prototype, 'preview').mockReturnValue(pending);
-  const modal = new MigrationModal({ app: app.asOriginalType__(), settings: new PluginSettings(), showNotice: vi.fn() });
+  const modal = new MigrationModal({ app: app.asOriginalType__(), runBulkOperation: passThrough, settings: new PluginSettings(), showNotice: vi.fn() });
   modal.onOpen();
   click(modal, 'Preview');
   const input = modal.contentEl.querySelector('input');

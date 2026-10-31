@@ -1,6 +1,8 @@
 import type { SettingDefinitionItem } from 'obsidian';
 
+import { appendCodeBlock } from '@mnaoumov/obsidian-lib/html-element';
 import { PluginSettingsTabBase } from '@mnaoumov/obsidian-lib/plugin/plugin-settings-tab';
+import { Platform } from 'obsidian';
 
 import type { PluginSettings } from './plugin-settings.ts';
 
@@ -46,6 +48,30 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
             this.bind({ propertyName: 'inlineTagConversion', valueComponent: dropdown });
           });
         }
+      }),
+      this.settingEx({
+        desc: createFragment((f) => {
+          f.appendText('Whether to record each Convert tags run as git commits, when the vault is inside a git repository.');
+          f.createEl('br');
+          f.appendText('Whatever was pending is committed first as ');
+          appendCodeBlock(f, 'chore: before OP<n>');
+          f.appendText(', then the run\'s own changes as ');
+          appendCodeBlock(f, 'OP<n>: Convert tags in <folder>');
+          f.appendText('.');
+          f.createEl('br');
+          f.appendText('The ');
+          appendCodeBlock(f, 'Undo a bulk operation...');
+          f.appendText(' command reverts one of those commits. Desktop only; uses the system ');
+          appendCodeBlock(f, 'git');
+          f.appendText('.');
+        }),
+        name: 'Should commit bulk operations',
+        render: (setting) => {
+          setting.addToggle((toggle) => {
+            this.bind({ propertyName: 'shouldCommitBulkOperations', valueComponent: toggle });
+          });
+        },
+        visible: () => Platform.isDesktop
       })
     );
     return rows;

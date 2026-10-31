@@ -4,6 +4,7 @@ import type {
   TFile
 } from 'obsidian';
 
+import { reportBulkOperationProgress } from '@mnaoumov/obsidian-lib/bulk-operation-progress';
 import {
   checkIsPlainObject,
   parseFrontmatter,
@@ -30,6 +31,10 @@ interface MigrationNote {
 
 interface MigrationPlan {
   readonly notes: readonly MigrationNote[];
+  /**
+   * The folder the preview covered, or '' for the whole vault.
+   */
+  readonly scope: string;
   readonly snapshots: ReadonlyMap<TFile, MigrationSnapshot>;
   readonly tags: readonly MigrationTag[];
 }
@@ -107,6 +112,8 @@ export class TagMigration {
           return after;
         });
       }
+      // The loop does not use `loop()`, so it refreshes the bulk-operation lock's heartbeat itself.
+      reportBulkOperationProgress();
     }
   }
 
@@ -159,7 +166,7 @@ export class TagMigration {
       }
       snapshots.set(tag.existing, { content, path: tag.path });
     }
-    return { notes, snapshots, tags };
+    return { notes, scope, snapshots, tags };
   }
 
   private convertInline(note: MigrationNote, targets: ReadonlyMap<string, TFile>): string {
@@ -183,6 +190,7 @@ export class TagMigration {
           await createFolderSafe(this.app, folder);
         }
         file = await this.app.vault.create(tag.path, '');
+        reportBulkOperationProgress();
       }
       targets.set(tag.tag, file);
     }

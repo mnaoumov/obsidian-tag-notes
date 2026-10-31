@@ -33,3 +33,5 @@ All links follow the vault's own wikilink or Markdown-link preferences. An exist
 Back up a vault before a large conversion. The preview rejects malformed properties, unsupported tag values, unsafe filenames and conflicting targets. Existing properties and note bodies are preserved, apart from the tag changes; normal YAML serialization may change property formatting.
 
 A note edited, renamed or deleted after preview causes conversion to stop. Writes use atomic processing per note, but there is no vault-wide rollback: a disk error or edit during conversion can leave earlier files changed and some tag notes created. Review those changes and open a fresh preview before retrying. New files never overwrite existing paths.
+
+In a vault kept in git, turn on [undo with git](<./02 Settings.md#undo-with-git>) to record each conversion as one commit that **Undo a bulk operation...** reverts, a partial one included.

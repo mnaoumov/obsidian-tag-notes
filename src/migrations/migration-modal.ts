@@ -10,8 +10,22 @@ import type { PluginSettings } from '../plugin-settings.ts';
 
 import { TagMigration } from './tag-migration.ts';
 
+/**
+ * Runs the conversion, as one bulk operation when the plugin records them as git commits.
+ */
+export type RunBulkOperation = (params: RunBulkOperationParams) => Promise<void>;
+
+/**
+ * The conversion and the summary naming it in the operation's commit.
+ */
+export interface RunBulkOperationParams {
+  readonly operation: () => Promise<void>;
+  readonly summary: string;
+}
+
 interface MigrationModalConstructorParams {
   readonly app: App;
+  readonly runBulkOperation: RunBulkOperation;
   readonly settings: PluginSettings;
   readonly showNotice: (message: string) => void;
 }
@@ -19,11 +33,13 @@ interface MigrationModalConstructorParams {
 export class MigrationModal extends Modal {
   private isBusy = false;
   private readonly migration: TagMigration;
+  private readonly runBulkOperation: RunBulkOperation;
   private readonly showNotice: (message: string) => void;
 
   public constructor(params: MigrationModalConstructorParams) {
     super(params.app);
     this.migration = new TagMigration(params);
+    this.runBulkOperation = params.runBulkOperation;
     this.showNotice = params.showNotice;
   }
 
@@ -70,7 +86,10 @@ export class MigrationModal extends Modal {
             convert.setButtonText('Convert').setCta().onClick(() => {
               this.run(async () => {
                 convert.setDisabled(true);
-                await this.migration.apply(plan);
+                await this.runBulkOperation({
+                  operation: () => this.migration.apply(plan),
+                  summary: `Convert tags in ${plan.scope || 'entire vault'}`
+                });
                 this.showNotice(`Converted tags. Updated notes: ${String(plan.notes.length)}.`);
                 this.close();
               });

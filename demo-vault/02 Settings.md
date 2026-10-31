@@ -17,6 +17,10 @@ The two properties must differ and cannot use the core `tags` name, which Obsidi
 
 `inlineTagConversion` controls how **Convert tags** handles body tags: `keep` leaves them in place, `link` replaces each with a link (the default), and `remove` deletes them. Every mode adds links to the note's tags property. The setting applies only to the migration, which requires a preview and confirmation.
 
+## Undo with git
+
+`shouldCommitBulkOperations` is desktop only and off by default. When the vault is inside a git repository, every **Convert tags** run is recorded as two commits: `chore: before OP<n>` with whatever was pending, then `OP<n>: Convert tags in <folder>` (or `in entire vault`) with the run's own changes. **`Tag Notes`: Undo a bulk operation...** lists those runs and reverts the one you pick with `git revert`; a conflict is left for you to resolve. It uses the system `git`, so the repository's own config, hooks and filters apply.
+
 ## Typing assistance
 
 1. `suggestTrigger`

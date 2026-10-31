@@ -8,6 +8,8 @@ See [the tag index and API](<./demo-vault/01 Tag index.md>), [settings](<./demo-
 
 Embed live lists with a `tag-notes` block or copy a tag subtree as a core Bases filter: [queries and Bases](<./demo-vault/05 Queries and Bases.md>).
 
+In a vault kept in git, each conversion can become one commit that the **Undo a bulk operation...** command reverts: [undo with git](<./demo-vault/02 Settings.md#undo-with-git>).
+
 ## Demo vault
 
 **The documentation is a demo vault.** Every feature has a note that explains what it does and why you would want it, with a button you can press to watch it happen.

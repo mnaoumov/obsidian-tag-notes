@@ -4,6 +4,9 @@ import type {
   TFile
 } from 'obsidian';
 
+import { CommandHandlerComponent } from '@mnaoumov/obsidian-lib/command-handlers/command-handler-component';
+import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
 // eslint-disable-next-line import-x/no-namespace -- Spy on the real prompt without replacing the module.
 import * as prompts from '@mnaoumov/obsidian-lib/modals/prompt';
@@ -25,7 +28,9 @@ import {
 } from 'vitest';
 
 import type { TagNotesApi } from '../api.d.ts';
+import type { RunBulkOperation } from './migrations/migration-modal.ts';
 
+import { MigrationModal } from './migrations/migration-modal.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { Plugin } from './plugin.ts';
 import { BasesFilterModal } from './queries/bases-filter-modal.ts';
@@ -38,6 +43,12 @@ import { TagSuggest } from './tagging/tag-suggest.ts';
 
 interface ChildHost {
   readonly createChild: (tag: TFile) => Promise<void>;
+}
+interface IsEnabledHost {
+  readonly isEnabled: () => boolean;
+}
+interface RunBulkOperationHost {
+  readonly runBulkOperation: RunBulkOperation;
 }
 interface SettingsHost {
   readonly pluginSettingsComponent: PluginSettingsComponent;
@@ -137,6 +148,39 @@ describe('TagNotes', () => {
     plugin.load();
     await onload.mock.results[0]?.value;
     expect(PluginHost.fromOriginalType2__(plugin).commands__.get('report-bug')).toBeDefined();
+  });
+  it('runs Convert tags through bulk-operation commits and offers their undo while the setting is on', async () => {
+    const app = App.createConfigured__();
+    const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
+    plugins.push(plugin);
+    const registerCommandHandlers = vi.spyOn(CommandHandlerComponent.prototype, 'registerCommandHandlers');
+    const addChild = vi.spyOn(plugin, 'addChild');
+    const onload = vi.spyOn(plugin, 'onload');
+    plugin.load();
+    await onload.mock.results[0]?.value;
+    const bulkOperationCommitComponent = addChild.mock.calls.map(([child]) => child).find((child) => child instanceof BulkOperationCommitComponent);
+    const undoCommandHandler = registerCommandHandlers.mock.calls
+      .flatMap(([getHandlers]) => getHandlers())
+      .find((handler) => handler instanceof UndoBulkOperationCommandHandler);
+    if (!bulkOperationCommitComponent || !undoCommandHandler) {
+      throw new Error('The plugin did not wire up bulk-operation commits.');
+    }
+    const isCommitEnabled = castTo<IsEnabledHost>(bulkOperationCommitComponent).isEnabled;
+    const isUndoEnabled = castTo<IsEnabledHost>(undoCommandHandler).isEnabled;
+    expect(isCommitEnabled()).toBe(false);
+    expect(isUndoEnabled()).toBe(false);
+    await castTo<SettingsHost>(plugin).pluginSettingsComponent.editAndSave((settings) => {
+      settings.shouldCommitBulkOperations = true;
+    });
+    expect(isCommitEnabled()).toBe(true);
+    expect(isUndoEnabled()).toBe(true);
+
+    const open = vi.spyOn(MigrationModal.prototype, 'open').mockImplementation(noop);
+    PluginHost.fromOriginalType2__(plugin).commands__.get('convert-tags')?.callback?.();
+    const runBulkOperation = vi.spyOn(bulkOperationCommitComponent, 'runBulkOperation').mockResolvedValue(undefined);
+    const params = { operation: vi.fn(), summary: 'Convert tags in entire vault' };
+    await castTo<RunBulkOperationHost>(open.mock.instances[0]).runBulkOperation(params);
+    expect(runBulkOperation).toHaveBeenCalledWith(params);
   });
   it('registers and reuses the sidebar view, refreshes it on rebuild and handles an unavailable sidebar', async () => {
     const app = App.createConfigured__({ files: { 'Tags/tag.md': '' } });

@@ -2,6 +2,8 @@ import type { PluginApiDeclaration } from '@mnaoumov/obsidian-lib/plugin/plugin-
 
 import { OpenBugReportCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-bug-report-command-handler';
 import { OpenDemoVaultCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/open-demo-vault-command-handler';
+import { UndoBulkOperationCommandHandler } from '@mnaoumov/obsidian-lib/command-handlers/undo-bulk-operation-command-handler';
+import { BulkOperationCommitComponent } from '@mnaoumov/obsidian-lib/components/bulk-operation-commit-component';
 import { PluginSettingsTabComponent } from '@mnaoumov/obsidian-lib/components/plugin-settings-tab-component';
 import { PluginDataHandler } from '@mnaoumov/obsidian-lib/data-handler';
 import { PluginBase } from '@mnaoumov/obsidian-lib/plugin/plugin';
@@ -46,6 +48,15 @@ export class Plugin extends PluginBase {
   }
 
   protected override async onloadImpl(): Promise<void> {
+    const isBulkOperationCommitEnabled = (): boolean => this.indexSettings.shouldCommitBulkOperations;
+    const bulkOperationCommitComponent = this.addChild(
+      new BulkOperationCommitComponent({
+        app: this.app,
+        isEnabled: isBulkOperationCommitEnabled,
+        pluginId: this.manifest.id,
+        pluginNoticeComponent: this.pluginNoticeComponent
+      })
+    );
     this.registerMarkdownCodeBlockProcessor('tag-notes', (source, element, context) => {
       const block = new TagNotesBlock({ api: this.api, app: this.app, containerEl: element, source, sourcePath: context.sourcePath });
       this.queryBlocks.add(block);
@@ -96,6 +107,7 @@ export class Plugin extends PluginBase {
       callback: () => {
         new MigrationModal({
           app: this.app,
+          runBulkOperation: (params): Promise<void> => bulkOperationCommitComponent.runBulkOperation(params),
           settings: this.indexSettings,
           showNotice: (message): void => {
             this.pluginNoticeComponent.showNotice(message);
@@ -178,7 +190,8 @@ export class Plugin extends PluginBase {
         pluginId: this.manifest.id,
         pluginNoticeComponent: this.pluginNoticeComponent,
         pluginVersion: this.manifest.version
-      })
+      }),
+      new UndoBulkOperationCommandHandler({ bulkOperationCommitComponent, isEnabled: isBulkOperationCommitEnabled })
     ]);
   }
 

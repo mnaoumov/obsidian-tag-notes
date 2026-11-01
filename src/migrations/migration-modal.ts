@@ -65,7 +65,7 @@ export class MigrationModal extends Modal {
           if (folder !== previewFolder) {
             return;
           }
-          results.createEl('h3', { text: `${String(plan.notes.length)} tagged notes; ${String(plan.tags.filter((tag) => !tag.existing).length)} new tag notes` });
+          results.createEl('h3', { text: `${countOf(plan.notes.length, 'tagged note')}; ${countOf(plan.tags.filter((tag) => !tag.existing).length, 'new tag note')}` });
           if (plan.notes.length === 0) {
             results.createEl('p', { text: 'No tags to convert in this scope.' });
             return;
@@ -119,4 +119,8 @@ export class MigrationModal extends Modal {
       }
     });
   }
+}
+
+function countOf(count: number, noun: string): string {
+  return `${String(count)} ${noun}${count === 1 ? '' : 's'}`;
 }

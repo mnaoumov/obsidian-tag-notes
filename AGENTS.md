@@ -50,6 +50,8 @@ The self-contained root `api.d.ts` is the consumer contract. The plugin publishe
 
 Verification: `npm run gate` includes the 100% unit-coverage threshold. Unit workers are capped at two. `npm run test:integration:desktop` exercises real link resolution, counts, changes, renames, deletion, reload and cycle handling in an isolated vault. The migration's cross-platform suite drives the real command, folder preview, cancellation and confirmed conversion, including Markdown links and colliding leaves, on desktop and Android. Set `OBSIDIAN_VERSION` to select a particular installed/public/catalyst channel.
 
+The demo vault documents every headline feature, one numbered note each (`01 Tag index` to `06 Tag tree`), with buttons that configure the supplied `Materials/` and the coverage and button suites guarding them. `npm run capture:screenshots` rewrites the five desktop and five mobile store screenshots in `images/screenshots/` from that vault: desktop first, then Android on the 900x1600 `obsidian_screenshots` AVD. The capture suites match no standard project glob, so `npm run test:integration` never rewrites the PNGs; their shared frames are staged in `src/test-helpers/screenshot-stages.test.helper.ts`, and the tag-tree frame runs last because it deletes the other walkthroughs' tag notes from the temporary vault.
+
 ## Design
 
 ### The data model

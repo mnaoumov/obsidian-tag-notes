@@ -36,3 +36,11 @@ export async function showIndex(app: App) {
   const api = plugin.api as { getCounts: (file: unknown) => unknown };
   return api.getCounts(app.vault.getFileByPath(`${folder}/Parent.md`));
 }
+
+export async function showTagTree(app: App): Promise<string> {
+  await configureCommunityPlugin({ app, pluginId: 'tag-notes', settings: { tagsPropertyName: 'keywords', parentPropertyName: 'broader', tagFolderPath: 'Materials/06 Tag tree/Tags' } });
+  if (!app.commands.executeCommandById('tag-notes:open-tag-tree')) {
+    throw new Error('Enable Tag Notes first.');
+  }
+  return 'Ready. The Tag Notes view is open in the left sidebar: Projects shows 0 / 4, and Waiting appears under both Work and Home.';
+}

@@ -53,7 +53,7 @@ Every setting is listed by its `data.json` key in [Settings](<./demo-vault/02 Se
 
 ## See also
 
-[My other Obsidian resources](https://github.com/mnaoumov/obsidian-resources)
+[My other Obsidian resources](https://mnaoumov.dev/obsidian/)
 
 | Plugin | Features | How `Tag Notes` differs |
 | --- | --- | --- |

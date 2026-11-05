@@ -74,13 +74,13 @@ describe('PluginSettingsTab', () => {
     });
     const tab = new PluginSettingsTab({ plugin, pluginSettingsComponent: component });
     const definition = tab.getSettingDefinitions().find((entry) => 'name' in entry && entry.name === 'Should commit bulk operations');
-    const visible = castTo<VisibleDefinition>(definition).visible;
+    const isVisible = castTo<VisibleDefinition>(definition).visible;
     const isDesktop = Platform.isDesktop;
     try {
       Platform.isDesktop = true;
-      expect(visible()).toBe(true);
+      expect(isVisible()).toBe(true);
       Platform.isDesktop = false;
-      expect(visible()).toBe(false);
+      expect(isVisible()).toBe(false);
     } finally {
       Platform.isDesktop = isDesktop;
     }

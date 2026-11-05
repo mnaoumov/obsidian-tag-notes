@@ -63,7 +63,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function fixture(content = 'Text @Alpha'): Fixture {
+function fixture(): Fixture {
+  const content = 'Text @Alpha';
   const app = App.createConfigured__({ files: { 'Source.md': content, 'Tags/Alpha.md': '', 'Tags/Bravo.md': '' } });
   const editor = new class extends Editor {}();
   editor.setValue(content);

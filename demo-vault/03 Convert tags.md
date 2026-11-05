@@ -34,4 +34,4 @@ Back up a vault before a large conversion. The preview rejects malformed propert
 
 A note edited, renamed or deleted after preview causes conversion to stop. Writes use atomic processing per note, but there is no vault-wide rollback: a disk error or edit during conversion can leave earlier files changed and some tag notes created. Review those changes and open a fresh preview before retrying. New files never overwrite existing paths.
 
-In a vault kept in git, turn on [undo with git](<./02 Settings.md#undo-with-git>) to record each conversion as one commit that **Undo a bulk operation...** reverts, a partial one included.
+In a vault kept in `git`, turn on [undo with git](<./02 Settings.md#undo-with-git>) to record each conversion as one commit that **Undo a bulk operation...** reverts, a partial one included.

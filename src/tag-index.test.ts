@@ -44,7 +44,7 @@ function fixture(): Fixture {
       files.push(file);
       const frontmatterLinks = Object.entries(properties).flatMap(([key, value]) =>
         Array.isArray(value)
-          ? value.flatMap((entry: unknown, index_) => typeof entry === 'string' ? [{ key: `${key}.${String(index_)}`, link: entry, original: entry }] : [])
+          ? value.map((entry: unknown, index_) => typeof entry === 'string' ? { key: `${key}.${String(index_)}`, link: entry, original: entry } : undefined).filter((link) => link !== undefined)
           : []
       );
       caches.set(file, { frontmatter: properties, frontmatterLinks });

@@ -115,6 +115,10 @@ By default, debug messages for this plugin (id: `tag-notes`) are hidden.
 
 If you need to enable them refer to the [documentation](https://mnaoumov.dev/obsidian-lib/guides/debugging/).
 
+## Changelog
+
+All notable changes to this project will be documented in the [CHANGELOG](./CHANGELOG.md).
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING](./CONTRIBUTING.md) to get set up.

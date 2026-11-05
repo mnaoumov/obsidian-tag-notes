@@ -1,6 +1,6 @@
 {
   "name": "tag-notes",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Make every tag a note: tag a note by linking it, with a tag hierarchy, a tag tree with counts, subtree search and a migration from existing tags.",
   "keywords": [],
   "license": "MIT",

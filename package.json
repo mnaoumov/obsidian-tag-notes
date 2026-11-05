@@ -46,6 +46,7 @@
   "overrides": {
     "@puppeteer/browsers": "^3.2.1",
     "deepmerge-ts": "^8.0.2",
+    "glob": "^14.0.3",
     "katex": "^0.18.2",
     "obsidian": "$obsidian",
     "re2js": "^2.9.1",

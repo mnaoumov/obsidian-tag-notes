@@ -32,7 +32,7 @@ None of them makes the note the tag. That inversion is this plugin's whole scope
 
 ## Current state
 
-The repo was generated on 2026-10-26 with `create-obsidian-plugin` (preset `all-in-one`, CSS, desktop and mobile, the unofficial API subset, no editor extensions). Its answers are in `.create-obsidian-plugin.json`, so re-running the generator in this folder updates every file not edited by hand. The first release, 1.0.0, was cut on 2026-11-04 with `minAppVersion` 1.15.0. The plugin is not yet in the community directory, so the README's `## Installation` keeps the unlisted opener until the listing is live.
+The repo was generated on 2026-10-26 with `create-obsidian-plugin` (preset `all-in-one`, CSS, desktop and mobile, the unofficial API subset, no editor extensions). Its answers are in `.create-obsidian-plugin.json`, so re-running the generator in this folder updates every file not edited by hand. The first release, 1.0.0, was cut on 2026-11-04 with `minAppVersion` 1.15.0. The plugin was submitted to the community directory on 2026-11-05 and is listed at <https://community.obsidian.md/plugins/tag-notes>, so the README's `## Installation` opens on the listed form.
 
 The metadata index, settings, version 1 API, tag tree, migration, tagging picker, code block and Bases command are implemented. `src/tag-index.ts` reads only metadata-cache frontmatter links; it never writes notes. `src/plugin.ts` wires layout-ready, metadata changed/deleted/resolved, rename and settings events and refreshes open tree views and query blocks. The generated sample commands and setting have been removed.
 

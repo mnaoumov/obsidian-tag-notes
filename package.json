@@ -72,7 +72,7 @@
     "markdownlint-cli2": "^0.24.0",
     "nano-staged": "^1.0.2",
     "obsidian": "^1.14.4",
-    "obsidian-integration-testing": "^17.9.0",
+    "obsidian-integration-testing": "^18.1.0",
     "obsidian-test-mocks": "^7.3.0",
     "sass-embedded": "^1.106.1",
     "sharp": "^0.35.5",

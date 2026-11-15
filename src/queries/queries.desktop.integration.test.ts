@@ -52,15 +52,8 @@ it('renders direct and subtree queries, opens links and refreshes after property
 
 it('copies the selected tag subtree through the real command picker and filters a real base', async () => {
   const result = await evalInObsidian({
-    async callback({ app, lib: { clickElement, waitUntil } }) {
-      const writeText = navigator.clipboard.writeText.bind(navigator.clipboard);
-      let copied = '';
-      navigator.clipboard.writeText = async (text): Promise<void> => {
-        copied = text;
-        await writeText(text);
-      };
-      window.electron.clipboard.writeText('native-probe');
-      const nativeProbe = window.electron.clipboard.readText();
+    async callback({ app, lib: { clickElement, useInMemoryClipboard, waitUntil } }) {
+      const clipboard = useInMemoryClipboard();
       try {
         const child = app.vault.getFileByPath('Tags/QueryChild.md');
         if (!child) {
@@ -92,15 +85,15 @@ it('copies the selected tag subtree through the real command picker and filters 
         if (notice?.includes('Could not copy')) {
           throw new Error(notice);
         }
-        await waitUntil({ message: 'copy completed', predicate: () => copied.includes('QueryParent.md'), timeoutInMilliseconds: 2500 });
-        const clipboard = window.electron.clipboard.readText();
+        await waitUntil({ message: 'copy completed', predicate: () => clipboard.text.includes('QueryParent.md'), timeoutInMilliseconds: 2500 });
+        const copied = clipboard.text;
         const base = await app.vault.create('QueryResults.base', `filters: ${JSON.stringify(copied)}\nviews:\n  - type: table\n    name: Tagged\n    order:\n      - file.name\n`);
         const leaf = app.workspace.getLeaf(false);
         await leaf.openFile(base);
         await waitUntil({ message: 'base shows tagged note', predicate: () => leaf.view.containerEl.textContent.includes('QueryDirect'), timeoutInMilliseconds: 2500 });
-        return { clipboard, content: leaf.view.containerEl.textContent, nativeProbe, text: copied };
+        return { content: leaf.view.containerEl.textContent, text: copied, writtenTexts: [...clipboard.writtenTexts] };
       } finally {
-        Object.assign(navigator.clipboard, { writeText });
+        clipboard.restore();
       }
     }
   });
@@ -111,9 +104,5 @@ it('copies the selected tag subtree through the real command picker and filters 
   expect(result.content).not.toContain('QueryMention');
   expect(result.text).toContain('[Parent]');
   expect(result.content).toContain('QueryMarkdown');
-  if (result.nativeProbe === 'native-probe') {
-    expect(result.clipboard).toBe(result.text);
-  } else {
-    console.warn('Native clipboard probe returned empty in the hidden runtime; asserted the real write call and Bases results.');
-  }
+  expect(result.writtenTexts).toEqual([result.text]);
 });

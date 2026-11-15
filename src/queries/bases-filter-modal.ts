@@ -49,7 +49,6 @@ export class BasesFilterModal extends SuggestModal<TFile> {
           throw new Error('The tag changed. Choose it again.');
         }
         const expression = createBasesFilter(this.app, this.api, file, this.settings().tagsPropertyName);
-        // eslint-disable-next-line n/no-unsupported-features/node-builtins -- Runs in Obsidian's browser renderer on desktop and mobile.
         await window.navigator.clipboard.writeText(expression);
         this.showNotice('Bases filter copied. Paste it into a Bases advanced filter. Copy again after changing the hierarchy.');
       } catch (error) {

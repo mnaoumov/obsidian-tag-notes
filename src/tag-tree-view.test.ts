@@ -43,7 +43,7 @@ interface ViewHost {
   // eslint-disable-next-line typescript-dev-toolkit/readonly-interface-members -- Tests clear the view's results element to exercise rendering before initialization.
   resultsEl: HTMLElement | null;
   readonly showMenu: (tag: TFile, $event: MouseEvent) => void;
-  readonly validateName: (name: string) => string | undefined;
+  readonly validateName: (name: string) => null | string;
 }
 
 afterEach(() => {
@@ -198,7 +198,7 @@ it('creates a child with configured property and link format, cancels safely and
   await f.host.createChild(f.a);
   expect(f.app.vault.getFileByPath('RootChild.md')).not.toBeNull();
   const validator = prompt.mock.calls[0]?.[0].valueValidator;
-  expect(await validator?.('valid')).toBeUndefined();
+  expect(await validator?.('valid')).toBeNull();
   expect(await validator?.('')).toBeTruthy();
   expect(f.host.validateName('bad/name')).toBeTruthy();
   expect(f.host.validateName('bad\nname')).toBeTruthy();
@@ -220,7 +220,7 @@ it('renames through the file manager and preserves files on cancel or unchanged 
   expect(rename).toHaveBeenCalledWith(root, 'Renamed.md');
   await f.host.rename(castTo<TFile>({ basename: 'Orphan', parent: null }));
   const validator = prompt.mock.calls[0]?.[0].valueValidator;
-  expect(await validator?.('valid')).toBeUndefined();
+  expect(await validator?.('valid')).toBeNull();
 });
 
 it('offers rename, child creation and reveal from the row context menu', async () => {

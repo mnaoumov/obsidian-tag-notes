@@ -159,7 +159,7 @@ export class TagIndex implements TagNotesApi {
     this.children.set(file, new Set());
   }
 
-  private findParentPath(start: TFile, target: TFile): TFile[] | undefined {
+  private findParentPath(start: TFile, target: TFile): null | TFile[] {
     const pending = [[start]];
     const visited = new Set<TFile>();
     for (let path = pending.pop(); path; path = pending.pop()) {
@@ -176,7 +176,7 @@ export class TagIndex implements TagNotesApi {
         pending.push([...path, parent]);
       }
     }
-    return undefined;
+    return null;
   }
 
   private readLinks(file: TFile, property: string): TFile[] {

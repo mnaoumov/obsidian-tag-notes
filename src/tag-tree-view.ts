@@ -228,7 +228,7 @@ export class TagTreeView extends ItemView {
     return tags.sort((a, b) => (this.sortByCount ? this.api.getCounts(b).withDescendants - this.api.getCounts(a).withDescendants : 0) || a.basename.localeCompare(b.basename) || a.path.localeCompare(b.path));
   }
 
-  private validateName(value: string): string | undefined {
-    return !value.trim() || /[\\/:*?"<>|]/u.test(value) || CONTROL_CHARACTER.test(value) ? 'Enter a note name without path separators or reserved filename characters.' : undefined;
+  private validateName(value: string): null | string {
+    return !value.trim() || /[\\/:*?"<>|]/u.test(value) || CONTROL_CHARACTER.test(value) ? 'Enter a note name without path separators or reserved filename characters.' : null;
   }
 }

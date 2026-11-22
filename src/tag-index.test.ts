@@ -32,7 +32,7 @@ function fixture(): Fixture {
   const app = castTo<App>({
     metadataCache: {
       getFileCache: (file: TFile): CachedMetadata | null => caches.get(file) ?? null,
-      // eslint-disable-next-line unicorn/name-replacements -- Obsidian's API spelling.
+      // eslint-disable-next-line unicorn/name-replacements, typescript-dev-toolkit/no-undefined-return-type -- Obsidian's API spelling and its return shape.
       getFirstLinkpathDest: (path: string): TFile | undefined => files.find((file) => file.path === `${path}.md`)
     },
     vault: { getMarkdownFiles: (): TFile[] => [...files] }

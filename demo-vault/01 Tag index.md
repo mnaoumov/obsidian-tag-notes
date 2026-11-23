@@ -1,6 +1,6 @@
 # Tag index
 
-`Tag Notes` reads links in one frontmatter list property, `keywords` by default. Body links are mentions and do not affect counts. A linked tag note can live anywhere; unused notes in the configured tag folder also count as tag notes.
+`Tag Notes` reads links in one frontmatter property, `keywords` by default: a single link as text, or several as a list. Body links are mentions and do not affect counts. A linked tag note can live anywhere; unused notes in the configured tag folder also count as tag notes.
 
 ## Hierarchy and counts
 

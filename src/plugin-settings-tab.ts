@@ -14,9 +14,9 @@ import type { PluginSettings } from './plugin-settings.ts';
 export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
   protected override getSettingDefinitionItems(): SettingDefinitionItem[] {
     const rows = ([
-      { desc: 'List property containing links to tag notes. The core tags property cannot index links.', name: 'Tags property', property: 'tagsPropertyName' },
+      { desc: 'Property containing links to tag notes: one link as text, several as a list. The core tags property cannot index links.', name: 'Tags property', property: 'tagsPropertyName' },
       { desc: 'Folder for new tag notes. Its unused notes also appear as tags. Leave empty to use the vault root.', name: 'Tag folder', property: 'tagFolderPath' },
-      { desc: 'List property containing links to broader tag notes. Several parents are allowed.', name: 'Parent property', property: 'parentPropertyName' },
+      { desc: 'Property containing links to broader tag notes: one link as text, several as a list.', name: 'Parent property', property: 'parentPropertyName' },
       { desc: 'Type this before a tag name or alias. The default @ avoids the core # tag suggester, which takes precedence.', name: 'Suggest trigger', property: 'suggestTrigger' }
     ] as const).map(({ desc, name, property }) =>
       this.settingEx({

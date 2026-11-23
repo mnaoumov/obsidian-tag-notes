@@ -1,6 +1,7 @@
 import type {
   App,
   CachedMetadata,
+  FrontmatterLinkCache,
   TFile
 } from 'obsidian';
 
@@ -42,11 +43,18 @@ function fixture(): Fixture {
     add(path, properties = {}): TFile {
       const file = castTo<TFile>({ extension: 'md', path });
       files.push(file);
-      const frontmatterLinks = Object.entries(properties).flatMap(([key, value]) =>
-        Array.isArray(value)
-          ? value.map((entry: unknown, index_) => typeof entry === 'string' ? { key: `${key}.${String(index_)}`, link: entry, original: entry } : undefined).filter((link) => link !== undefined)
-          : []
-      );
+      const frontmatterLinks: FrontmatterLinkCache[] = [];
+      for (const [key, value] of Object.entries(properties)) {
+        if (typeof value === 'string') {
+          frontmatterLinks.push({ key, link: value, original: value });
+        } else if (Array.isArray(value)) {
+          for (const [index_, entry] of value.entries()) {
+            if (typeof entry === 'string') {
+              frontmatterLinks.push({ key: `${key}.${String(index_)}`, link: entry, original: entry });
+            }
+          }
+        }
+      }
       caches.set(file, { frontmatter: properties, frontmatterLinks });
       return file;
     },
@@ -77,6 +85,19 @@ describe('TagIndex', () => {
     const unknown = castTo<TFile>({ path: 'unknown.md' });
     expect(f.index.getTags(unknown)).toEqual([]);
     expect(f.index.getDescendants(unknown)).toEqual([]);
+  });
+  it('reads a plain string tags or parent property as one link', () => {
+    const f = fixture();
+    const root = f.add('Tags/root.md');
+    const child = f.add('Tags/child.md', { broader: 'Tags/root' });
+    const note = f.add('note.md', { keywords: 'Tags/child' });
+    const nested = f.add('nested.md', { keywords: { inner: 'Tags/child' } });
+    f.caches.set(nested, { frontmatter: { keywords: 'Tags/child' }, frontmatterLinks: [{ key: 'keywords.inner', link: 'Tags/child', original: 'Tags/child' }] });
+    f.index.rebuild();
+    expect(f.index.getTags(note)).toEqual([child]);
+    expect(f.index.getTags(nested)).toEqual([]);
+    expect(f.index.getParents(child)).toEqual([root]);
+    expect(f.index.getTaggedNotes(root, { includeDescendants: true })).toEqual([note]);
   });
   it('walks shared ancestors once while checking new edges and invalidates ancestry after repair', () => {
     const f = fixture();
@@ -161,10 +182,11 @@ describe('TagIndex', () => {
     expect(f.index.getTaggedNotes(parent)).toEqual([]);
   });
 
-  it('ignores scalar properties, nested entries, unresolved and non-markdown links', () => {
+  it('ignores non-string scalar properties, nested entries, unresolved and non-markdown links', () => {
     const f = fixture();
     const tag = f.add('Tags/tag.md');
-    const scalar = f.add('scalar.md', { keywords: 'Tags/tag' });
+    const scalar = f.add('scalar.md', { keywords: 42 });
+    f.caches.set(scalar, { frontmatter: { keywords: 42 }, frontmatterLinks: [{ key: 'keywords', link: 'Tags/tag', original: 'Tags/tag' }] });
     const nested = f.add('nested.md', { keywords: [{ value: 'Tags/tag' }, 42] });
     f.caches.set(nested, {
       frontmatter: { keywords: [{}] },

@@ -64,6 +64,30 @@ describe('Tag index in Obsidian', () => {
     });
     expect(result).toEqual({ childIsTag: true, counts: { direct: 1, withDescendants: 1 }, notes: ['Tagged.md'], parents: ['Tags/Parent.md'] });
   });
+  it('indexes a plain string tags and parent property as one link', async () => {
+    const result = await evalInObsidian({
+      async callback({ app, lib: { waitUntil } }) {
+        const plugin = app.plugins.getPlugin('tag-notes');
+        if (!plugin || !('api' in plugin)) {
+          throw new Error('Tag Notes API missing');
+        }
+        const api = plugin.api as TagNotesApi;
+        if (!app.vault.getFolderByPath('Tags')) {
+          await app.vault.createFolder('Tags');
+        }
+        const parent = await app.vault.create('Tags/StringParent.md', 'Parent');
+        const child = await app.vault.create('Tags/StringChild.md', '---\nbroader: "[[StringParent]]"\n---\n');
+        const note = await app.vault.create('StringTagged.md', '---\nkeywords: "[child](Tags/StringChild.md)"\n---\n');
+        await waitUntil({ message: 'string property link indexed', predicate: () => api.getTags(note).length === 1 && api.getParents(child).length === 1 });
+        return {
+          notes: api.getTaggedNotes(parent, { includeDescendants: true }).map((file) => file.path),
+          parents: api.getParents(child).map((file) => file.path),
+          tags: api.getTags(note).map((file) => file.path)
+        };
+      }
+    });
+    expect(result).toEqual({ notes: ['StringTagged.md'], parents: ['Tags/StringParent.md'], tags: ['Tags/StringChild.md'] });
+  });
 
   it('updates after metadata changes, renames, deletion and reload', async () => {
     const result = await evalInObsidian({

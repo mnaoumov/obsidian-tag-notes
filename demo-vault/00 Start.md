@@ -1,6 +1,6 @@
 # Start here
 
-This vault demonstrates `Tag Notes`: a note is tagged by links in its `keywords` list property, and tag notes name their parents through `broader`.
+This vault demonstrates `Tag Notes`: a note is tagged by links in its `keywords` property, and tag notes name their parents through `broader`.
 
 ## Try the index
 

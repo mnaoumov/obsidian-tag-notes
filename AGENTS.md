@@ -10,7 +10,7 @@ Filing from the CLI or the API (`gh issue create --body`, or an AI agent filing 
 
 ## Overview
 
-`Tag Notes` makes a tag a **note**. A note is tagged by **linking** that tag note from a list property, and the plugin gives tag notes what `#tags` and the core Tags pane give `#tags`: a hierarchy, a tree with counts, "notes tagged X or anything under X", fast typing, and a one-shot migration from existing `#tags`.
+`Tag Notes` makes a tag a **note**. A note is tagged by **linking** that tag note from a frontmatter property, and the plugin gives tag notes what `#tags` and the core Tags pane give `#tags`: a hierarchy, a tree with counts, "notes tagged X or anything under X", fast typing, and a one-shot migration from existing `#tags`.
 
 Why a note instead of a `#tag`:
 
@@ -58,7 +58,7 @@ The demo vault documents every headline feature, one numbered note each (`01 Tag
 
 **Everything the plugin reads is plain, tool-free data; only the derived views need the plugin.**
 
-- **A note's tags** are links in one frontmatter list property, `keywords` by default (setting `tagsPropertyName`). `keywords` is schema.org's name for exactly this (`CreativeWork.keywords`, whose values may be `DefinedTerm`s). It cannot be the core `tags` property: Obsidian types that one as tag strings and does not index links in it.
+- **A note's tags** are links in one frontmatter property, `keywords` by default (setting `tagsPropertyName`). One link may be a plain string and several a list; every reader accepts both shapes, and every writer writes a string for one link and a list for several (`src/property-values.ts`), so a first tag is a string and a second turns it into a list. The parent property follows the same rule. `keywords` is schema.org's name for exactly this (`CreativeWork.keywords`, whose values may be `DefinedTerm`s). It cannot be the core `tags` property: Obsidian types that one as tag strings and does not index links in it.
 - **A tag note** is any note that some note's tags property links to, wherever it lives. The tag folder (`Tags` by default, setting `tagFolderPath`) is only where the plugin **creates** new tag notes, and the tree also shows tag notes in that folder that nothing links to yet.
 - **A tag's parents** are links in the tag note's own list property, `broader` by default (setting `parentPropertyName`). `broader` is SKOS's name for a parent concept (`skos:broader`). It deliberately avoids `parent`, which vaults commonly use for people. A tag may have several parents (`#status/cancelled` and `#project/cancelled` can be one concept or two); a cycle is detected, reported once with the notes involved, and broken at the edge that closed it for every derived view, without editing any note.
 - **Links in a note's body** to a tag note are mentions, not tags. Only the property tags a note, so a count never depends on prose.

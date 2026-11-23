@@ -21,6 +21,7 @@ import {
 } from 'obsidian';
 
 import { PluginSettings } from '../plugin-settings.ts';
+import { toPropertyValue } from '../property-values.ts';
 
 interface MigrationNote {
   readonly content: string;
@@ -94,11 +95,11 @@ export class TagMigration {
       const frontmatter = parseFrontmatter(content);
       if (note) {
         content = this.convertInline(note, targets);
-        frontmatter[this.settings.tagsPropertyName] = [...new Set([...this.readList(frontmatter[this.settings.tagsPropertyName], file.path), ...note.tags.map((name) => this.link(targets, name, file.path))])];
+        frontmatter[this.settings.tagsPropertyName] = toPropertyValue([...new Set([...this.readList(frontmatter[this.settings.tagsPropertyName], file.path), ...note.tags.map((name) => this.link(targets, name, file.path))])]);
         deleteProperties(frontmatter, this.getTagPropertyKeys(frontmatter));
       }
       if (tag?.parent) {
-        frontmatter[this.settings.parentPropertyName] = [...new Set([...this.readList(frontmatter[this.settings.parentPropertyName], file.path), this.link(targets, tag.parent, file.path)])];
+        frontmatter[this.settings.parentPropertyName] = toPropertyValue([...new Set([...this.readList(frontmatter[this.settings.parentPropertyName], file.path), this.link(targets, tag.parent, file.path)])]);
       }
       if (tag?.alias) {
         frontmatter.aliases = [...new Set([...this.readList(frontmatter.aliases, file.path), tag.alias])];

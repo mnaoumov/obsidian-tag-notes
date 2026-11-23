@@ -181,14 +181,17 @@ export class TagIndex implements TagNotesApi {
 
   private readLinks(file: TFile, property: string): TFile[] {
     const cache: CachedMetadata | null = this.app.metadataCache.getFileCache(file);
-    if (!Array.isArray(cache?.frontmatter?.[property])) {
+    const value: unknown = cache?.frontmatter?.[property];
+    // A property holding one link may be a plain string; several links are a list.
+    const isString = typeof value === 'string';
+    if (!cache || (!isString && !Array.isArray(value))) {
       return [];
     }
     const result = new Set<TFile>();
     for (const link of cache.frontmatterLinks ?? []) {
-      // Only direct list entries: nested objects and body links are not tags.
+      // Only the string itself or direct list entries: nested objects and body links are not tags.
       const suffix = link.key.slice(property.length);
-      if (!link.key.startsWith(property) || !/^\.\d+$/u.test(suffix)) {
+      if (!link.key.startsWith(property) || (isString ? suffix !== '' : !/^\.\d+$/u.test(suffix))) {
         continue;
       }
       const target = this.app.metadataCache.getFirstLinkpathDest(parseLinktext(link.link).path, file.path);

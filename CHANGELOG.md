@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.0.1
+
+This release has 1 fix and 2 documentation changes. 8 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### Fixed
+
+- load again after an update or Hot Reload instead of failing on an already published API
+
+### Documentation
+
+- open the README install section on the community directory listing
+- link the changelog from the README
+
 ## 1.0.0
 
 First release of `Tag Notes`: make every tag a note. A note is tagged by linking a tag note from a list property, and the plugin brings back what `#tags` give: a hierarchy, a tree with counts, "tagged X or anything under X", fast tagging, and a one-shot migration from existing `#tags`.

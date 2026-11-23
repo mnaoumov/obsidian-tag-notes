@@ -152,7 +152,7 @@ export class Plugin extends PluginBase {
     );
 
     const rebuild = (): void => {
-      this.indexSettings = { ...pluginSettingsComponent.settings };
+      this.indexSettings = Object.assign(new PluginSettings(), pluginSettingsComponent.settings);
       this.tagIndex.rebuild();
       for (const block of this.queryBlocks) {
         block.refresh();

@@ -57,8 +57,12 @@ Every setting is listed by its `data.json` key in [Settings](<./demo-vault/02 Se
 
 | Plugin | Features | How `Tag Notes` differs |
 | --- | --- | --- |
+| [`Bases Structure`](https://community.obsidian.md/plugins/bases-structure) | a Bases view drawing a typed note hierarchy from link properties or body links; add, move and retype notes on the graph | Overlaps on hierarchy: types are declared per view and not about tags, so no tag counts, no "tagged X or below" list and no conversion of `#tags` |
 | [`Breadcrumbs`](https://community.obsidian.md/plugins/breadcrumbs) | hierarchies from typed links such as `up` and `down`; implied and transitive relations; trail, matrix and tree views | Overlaps on hierarchy: not about tags, so no tag counts, no "tagged X or below" list and no conversion of `#tags`; works beside it, with `broader` declared as an `up` field |
+| [`Facet Folders`](https://community.obsidian.md/plugins/grouped-property-explorer) | a sidebar switching between folders, property facets and a hierarchical `#tag` tree; property groups in Properties and Bases; batch property and tag edits | Covers part of it: the tag tree is of `#tags`, not of tag notes |
 | [`Index Notes`](https://community.obsidian.md/plugins/index-notes) | generates index blocks from hierarchical `#tags` | Same goal of listing notes by tag: the tag is a note rather than a `#tag` |
+| [`Keyword Notes Editor`](https://community.obsidian.md/plugins/keyword-notes-editor) | a sidebar of configured `#tags` and folders with a nested sub-tag tree; shows every matching note in one scrollable, editable view | Covers part of it: lists notes by `#tag` and its sub-tags; here the tag is a note and the tree comes from `broader` links |
+| [`Link Structure`](https://community.obsidian.md/plugins/link-structure) | a Bases view showing notes as a tree built from an `up` link property; several parents; drag and drop to move notes, updating links | Same shape of hierarchy, with `broader` in place of `up`: adds tagging, direct and subtree counts, "tagged X or below" lists and conversion of `#tags`; no drag and drop |
 | [`Notebook Navigator`](https://community.obsidian.md/plugins/notebook-navigator) | a file browser with a `#tag` tree among its navigation | Covers part of it: browses `#tag` hierarchies; tag notes are not tags there |
 | [`Tag Along`](https://community.obsidian.md/plugins/tag-along) | browses the vault as a folder tree built from `#tags` | Covers part of it: the tree is of `#tags`, not of tag notes |
 | [`Tag Folder Explorer`](https://community.obsidian.md/plugins/tag-folder-explorer) | virtual folders from nested `#tags` | Covers part of it: the tree is of `#tags`, not of tag notes |
@@ -68,7 +72,7 @@ Every setting is listed by its `data.json` key in [Settings](<./demo-vault/02 Se
 | [`TagFolder`](https://community.obsidian.md/plugins/obsidian-tagfolder) | shows `#tags` as folders | Covers part of it: the tree is of `#tags`, not of tag notes |
 | [`Unified Tag Links`](https://community.obsidian.md/plugins/unified-tag-links) | links `#tags` to concept notes that list the tag in their aliases, through a managed `tag_links` property | Same goal of joining notes and tags: keeps the `#tag` as the source and derives the links; here the links are the tags, with a tree, counts and a one-shot conversion |
 
-Last searched for similar plugins on 2026-11-01.
+Last searched for similar plugins on 2026-11-23.
 
 ## For plugin developers
 

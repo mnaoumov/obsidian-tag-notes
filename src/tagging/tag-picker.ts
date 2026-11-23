@@ -19,6 +19,7 @@ import {
 import type { TagNotesApi } from '../../api.d.ts';
 
 import { PluginSettings } from '../plugin-settings.ts';
+import { toPropertyValue } from '../property-values.ts';
 
 export interface TagChoice {
   readonly file: null | TFile;
@@ -145,7 +146,7 @@ export class TagPicker {
           return parsed !== null && !parsed.isExternal && this.app.metadataCache.getFirstLinkpathDest(parseLinktext(parsed.url).path, file.path) === target;
         });
         if (!isAlreadyTagged) {
-          frontmatter[settings.tagsPropertyName] = [...values, link];
+          frontmatter[settings.tagsPropertyName] = toPropertyValue([...values, link]);
         }
       });
     } catch (error) {
@@ -172,14 +173,17 @@ export class TagPicker {
     if (value === undefined || value === null) {
       return [];
     }
+    if (typeof value === 'string') {
+      return [value];
+    }
     if (!Array.isArray(value)) {
-      throw new TypeError('The tags property must be a list of strings. Its contents were left unchanged.');
+      throw new TypeError('The tags property must be a string or a list of strings. Its contents were left unchanged.');
     }
     const entries: unknown[] = value;
     const tags: string[] = [];
     for (const entry of entries) {
       if (typeof entry !== 'string') {
-        throw new TypeError('The tags property must be a list of strings. Its contents were left unchanged.');
+        throw new TypeError('The tags property must be a string or a list of strings. Its contents were left unchanged.');
       }
       tags.push(entry);
     }

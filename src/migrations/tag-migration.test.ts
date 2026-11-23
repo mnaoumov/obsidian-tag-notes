@@ -49,7 +49,7 @@ it('previews without writes and converts hierarchy, collisions and inline tags w
   expect(content).toContain('Sentence [[');
   expect(content).toContain('`#code`');
   expect(parseFrontmatter(await app.vault.read(child)).aliases).toEqual(['bravo']);
-  expect(parseFrontmatter(await app.vault.read(child))['broader']).toEqual(['[[charlie]]']);
+  expect(parseFrontmatter(await app.vault.read(child))['broader']).toBe('[[charlie]]');
 });
 
 it('rejects a stale preview before creating any tag notes', async () => {
@@ -104,7 +104,7 @@ it('keeps existing scalar properties and merges parents and aliases without dupl
   if (!reused || !source) {
     throw new Error('Missing source');
   }
-  expect(parseFrontmatter(await app.vault.read(reused))).toMatchObject({ aliases: ['bravo'], broader: ['[[alpha]]'] });
+  expect(parseFrontmatter(await app.vault.read(reused))).toMatchObject({ aliases: ['bravo'], broader: '[[alpha]]' });
   expect(await app.vault.read(reused)).toContain('Existing body');
   expect(parseFrontmatter(await app.vault.read(source))['keywords']).toContain('[[Keep]]');
 });
@@ -233,7 +233,7 @@ it('allows a fresh preview after a write failure while keeping the failed previe
   if (!source) {
     throw new Error('Missing source');
   }
-  expect(parseFrontmatter(await app.vault.read(source))['keywords']).toEqual(['[[alpha]]']);
+  expect(parseFrontmatter(await app.vault.read(source))['keywords']).toBe('[[alpha]]');
 });
 
 it('converts a case-insensitive core tags property and removes its original key', async () => {
@@ -246,7 +246,7 @@ it('converts a case-insensitive core tags property and removes its original key'
   }
   const frontmatter = parseFrontmatter(await app.vault.read(source));
   expect(frontmatter['Tags']).toBeUndefined();
-  expect(frontmatter['keywords']).toEqual(['[[alpha]]']);
+  expect(frontmatter['keywords']).toBe('[[alpha]]');
 });
 
 it.each([

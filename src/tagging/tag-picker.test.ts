@@ -143,6 +143,23 @@ describe('tag selection', () => {
     }
   });
 
+  it('writes a first tag as a string, and a second turns it into a list', async () => {
+    const f = fixture();
+    await f.apply();
+    expect(parseFrontmatter(await f.app.vault.read(f.source))['keywords']).toBe('[[Alpha]]');
+    const bravo = f.app.vault.getFileByPath('Tags/Bravo.md');
+    if (!bravo) {
+      throw new Error('Fixture missing');
+    }
+    f.editor.setValue('Text @Alpha');
+    await f.apply({ file: bravo.asOriginalType2__(), name: 'Bravo' });
+    expect(parseFrontmatter(await f.app.vault.read(f.source))['keywords']).toEqual(['[[Alpha]]', '[[Bravo]]']);
+    f.editor.setValue('Text @Alpha');
+    await f.app.vault.modify(f.source, setFrontmatter('Text ', { keywords: '[[Alpha]]' }));
+    await f.apply();
+    expect(parseFrontmatter(await f.app.vault.read(f.source))['keywords']).toBe('[[Alpha]]');
+  });
+
   it('keeps equally named tags selectable by their distinct paths', async () => {
     const f = fixture();
     await f.app.vault.createFolder('Tags/Nested');
@@ -153,7 +170,7 @@ describe('tag selection', () => {
 
   it('accepts empty properties and rejects invalid properties before creating a file', async () => {
     const f = fixture();
-    for (const value of ['null', 'wrong', '\n  - 123']) {
+    for (const value of ['null', '123', '\n  - 123']) {
       const content = `---\nkeywords: ${value}\n---\nText @Alpha`;
       f.editor.setValue(content);
       const line = f.editor.lastLine();

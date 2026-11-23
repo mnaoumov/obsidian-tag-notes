@@ -4,7 +4,7 @@
 
 A `#tag` is a bare string. It cannot carry a description, aliases or properties of its own, a misspelt one silently becomes a new tag, and renaming one is a search-and-replace across the vault. A note has none of those problems, but tagging with links to notes loses what `#tags` give you: `#parent/child` hierarchy, the Tags pane with its tree and counts, and suggestions as you type.
 
-`Tag Notes` makes the note the tag, so your tag pages are the tags themselves. A note is tagged by linking tag notes from a list property, `keywords` by default; a tag note names its parents in `broader`. The plugin brings back the hierarchy, a tag tree with counts, "tagged X or anything under X" lists, an `@` suggester, and a previewed conversion of your existing `#tags`. All of it is plain frontmatter links, so the data stays readable with no plugin installed, and renaming a tag note renames the tag everywhere.
+`Tag Notes` makes the note the tag, so your tag pages are the tags themselves. A note is tagged by linking tag notes from a property, `keywords` by default (one link as text, several as a list); a tag note names its parents in `broader`. The plugin brings back the hierarchy, a tag tree with counts, "tagged X or anything under X" lists, an `@` suggester, and a previewed conversion of your existing `#tags`. All of it is plain frontmatter links, so the data stays readable with no plugin installed, and renaming a tag note renames the tag everywhere.
 
 <!-- markdownlint-disable MD033 -->
 
@@ -43,7 +43,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 
 ## What it does
 
-- **Tag notes and their hierarchy**: a note's tags are the links in its `keywords` list, a tag note lists its parents in `broader`, several parents are allowed, and a cycle is reported and broken without editing any note. Every tag has a direct count and a count with descendants, each note counted once: see [Tag index](<./demo-vault/01 Tag index.md>).
+- **Tag notes and their hierarchy**: a note's tags are the links in its `keywords` property (one link as text, several as a list), a tag note lists its parents in `broader`, several parents are allowed, and a cycle is reported and broken without editing any note. Every tag has a direct count and a count with descendants, each note counted once: see [Tag index](<./demo-vault/01 Tag index.md>).
 - **Tag tree**: a sidebar view like the core Tags pane, with both counts, a filter, sorting by name or count, the notes of a subtree, and rename, new child tag and reveal on a right-click: see [Tag tree](<./demo-vault/06 Tag tree.md>).
 - **Tag this note** and the `@` suggester: choose a tag note by name or alias, or create one, and the link lands in the tags property: see [Tag this note](<./demo-vault/04 Tag this note.md>).
 - **Convert tags**: turn the `#tags` of the whole vault or one folder into tag notes, `#a/b` into `b` with `broader: [[a]]`, after a preview of every note it will change. In a vault kept in `git`, each run can be one commit that **Undo a bulk operation...** reverts: see [Convert tags](<./demo-vault/03 Convert tags.md>) and [undo with git](<./demo-vault/02 Settings.md#undo-with-git>).

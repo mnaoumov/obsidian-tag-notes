@@ -3,4 +3,6 @@ import { wrapCliTask } from '@mnaoumov/typescript-dev-toolkit/cli-utils';
 
 import { buildOptions } from './build-options.ts';
 
-await wrapCliTask(() => dev(buildOptions));
+await wrapCliTask(async () => {
+  await dev(buildOptions);
+});

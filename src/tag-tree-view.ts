@@ -10,6 +10,7 @@ import { createFolderSafe } from '@mnaoumov/obsidian-lib/vault';
 import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 import { noopAsync } from '@mnaoumov/typescript-lib/function';
 import {
+  ExtraButtonComponent,
   ItemView,
   Menu,
   normalizePath
@@ -76,6 +77,12 @@ export class TagTreeView extends ItemView {
       this.sortByCount = sort.value === 'count';
       this.refresh();
     });
+    new ExtraButtonComponent(controls).setIcon('chevrons-down-up').setTooltip('Collapse all').onClick(() => {
+      this.setCollapsed(this.api.getTagNotes(), true);
+    });
+    new ExtraButtonComponent(controls).setIcon('chevrons-up-down').setTooltip('Expand all').onClick(() => {
+      this.setCollapsed(this.api.getTagNotes(), false);
+    });
     this.contentEl.createEl('p', { cls: 'tag-notes-legend', text: 'Counts: direct / including descendants' });
     this.treeEl = this.contentEl.createDiv({ cls: 'tag-notes-tree' });
     this.resultsEl = this.contentEl.createDiv({ cls: 'tag-notes-results' });
@@ -103,7 +110,8 @@ export class TagTreeView extends ItemView {
     }
     const roots = tags.filter((tag) => this.api.getParents(tag).length === 0);
     // Iterative rendering supports deep hierarchies without using the JS call stack.
-    const pending = this.sortTags(roots).reverse().map((tag) => ({ container: tree, tag }));
+    const sortedRoots = this.sortTags(roots);
+    const pending = [...sortedRoots].reverse().map((tag) => ({ container: tree, level: sortedRoots, tag }));
     for (let entry = pending.pop(); entry; entry = pending.pop()) {
       if (!visible.has(entry.tag)) {
         continue;
@@ -112,7 +120,7 @@ export class TagTreeView extends ItemView {
       const branch = entry.container.createDiv({ cls: 'tag-notes-branch' });
       const row = branch.createDiv({ cls: 'tag-notes-tree-row' });
       const isExpanded = this.filter !== '' || !this.collapsed.has(entry.tag);
-      const tag = entry.tag;
+      const { level, tag } = entry;
       if (children.length > 0) {
         const toggle = row.createEl('button', { attr: { 'aria-expanded': String(isExpanded), 'aria-label': `Toggle ${tag.basename}` }, cls: 'tag-notes-toggle', text: isExpanded ? '▾' : '▸' });
         toggle.addEventListener('click', (): void => {
@@ -137,13 +145,13 @@ export class TagTreeView extends ItemView {
       });
       row.addEventListener('contextmenu', ($event): void => {
         $event.preventDefault();
-        this.showMenu(tag, $event);
+        this.showMenu(tag, level, $event);
       });
       if (!isExpanded) {
         continue;
       }
       const container = branch.createDiv({ cls: 'tag-notes-children' });
-      pending.push(...children.reverse().map((child) => ({ container, tag: child })));
+      pending.push(...[...children].reverse().map((child) => ({ container, level: children, tag: child })));
     }
     if (!tree.childElementCount) {
       tree.createEl('p', { text: tags.length > 0 ? 'No matching tag notes.' : 'No tag notes yet. Link a note from your tags property or add a note to the tag folder.' });
@@ -204,7 +212,26 @@ export class TagTreeView extends ItemView {
     invokeAsyncSafely(() => action().catch(this.showError));
   }
 
-  private showMenu(tag: TFile, $event: MouseEvent): void {
+  /**
+   * Collapses or expands every given tag that has children; a collapsed tag stays collapsed under each of its parents.
+   *
+   * The per-level form is adapted from the "Collapse/Expand tags at this level" Tags-pane menu of `Tag Wrangler`
+   * (https://github.com/pjeby/tag-wrangler), `src/plugin.js`. Copyright 2021 PJ Eby. ISC License: permission to use,
+   * copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that
+   * the above copyright notice and this permission notice appear in all copies.
+   */
+  private setCollapsed(tags: readonly TFile[], isCollapsed: boolean): void {
+    for (const tag of tags) {
+      if (!isCollapsed) {
+        this.collapsed.delete(tag);
+      } else if (this.api.getChildren(tag).length > 0) {
+        this.collapsed.add(tag);
+      }
+    }
+    this.refresh();
+  }
+
+  private showMenu(tag: TFile, level: readonly TFile[], $event: MouseEvent): void {
     const menu = new Menu();
     menu.addItem((item) =>
       item.setTitle('Rename').setIcon('pencil').onClick(() => {
@@ -221,6 +248,19 @@ export class TagTreeView extends ItemView {
         this.run(() => revealInFileExplorer({ abstractFile: tag, app: this.app }));
       })
     );
+    if (level.some((sibling) => this.api.getChildren(sibling).length > 0)) {
+      menu.addSeparator();
+      menu.addItem((item) =>
+        item.setTitle('Collapse tags at this level').setIcon('chevrons-down-up').onClick(() => {
+          this.setCollapsed(level, true);
+        })
+      );
+      menu.addItem((item) =>
+        item.setTitle('Expand tags at this level').setIcon('chevrons-up-down').onClick(() => {
+          this.setCollapsed(level, false);
+        })
+      );
+    }
     menu.showAtMouseEvent($event);
   }
 

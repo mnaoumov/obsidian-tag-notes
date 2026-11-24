@@ -30,6 +30,7 @@ import {
 import type { TagNotesApi } from '../api.d.ts';
 import type { RunBulkOperation } from './migrations/migration-modal.ts';
 
+import { RedundantTagsModal } from './checks/redundant-tags-modal.ts';
 import { MigrationModal } from './migrations/migration-modal.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { Plugin } from './plugin.ts';
@@ -52,6 +53,9 @@ interface RunBulkOperationHost {
 }
 interface SettingsHost {
   readonly pluginSettingsComponent: PluginSettingsComponent;
+}
+interface ShowErrorHost {
+  readonly showError: (error: unknown) => void;
 }
 
 const plugins: Plugin[] = [];
@@ -139,6 +143,21 @@ describe('TagNotes', () => {
     await vi.waitFor(() => {
       expect(notice).toHaveBeenCalledWith(expect.stringContaining('note changed'));
     });
+  });
+  it('opens the redundant tags check and reports its errors through the plugin notice component', async () => {
+    const app = App.createConfigured__({ files: { 'Note.md': '' } });
+    const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
+    plugins.push(plugin);
+    const onload = vi.spyOn(plugin, 'onload');
+    plugin.load();
+    await onload.mock.results[0]?.value;
+    const open = vi.spyOn(RedundantTagsModal.prototype, 'open').mockImplementation(noop);
+    PluginHost.fromOriginalType2__(plugin).commands__.get('check-redundant-tags')?.callback?.();
+    expect(open).toHaveBeenCalledOnce();
+    const notice = vi.spyOn(PluginNoticeComponent.prototype, 'showNotice');
+    castTo<ShowErrorHost>(open.mock.instances[0]).showError(new Error('Cannot open'));
+    expect(notice).toHaveBeenCalledWith('Error: Cannot open');
+    expect(plugin.api.getRedundantTags()).toEqual([]);
   });
   it('registers the report bug command', async () => {
     const app = App.createConfigured__();

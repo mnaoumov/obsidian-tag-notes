@@ -12,6 +12,7 @@ import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 
 import type { TagNotesApi } from '../api.d.ts';
 
+import { RedundantTagsModal } from './checks/redundant-tags-modal.ts';
 import { MigrationModal } from './migrations/migration-modal.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -44,7 +45,7 @@ export class Plugin extends PluginBase {
   private readonly queryBlocks = new Set<TagNotesBlock>();
 
   protected override getPluginApis(): PluginApiDeclaration[] {
-    return [{ api: this.api, apiVersion: '1.0.0' }];
+    return [{ api: this.api, apiVersion: '1.1.0' }];
   }
 
   protected override async onloadImpl(): Promise<void> {
@@ -116,6 +117,19 @@ export class Plugin extends PluginBase {
       },
       id: 'convert-tags',
       name: 'Convert tags'
+    });
+    this.addCommand({
+      callback: () => {
+        new RedundantTagsModal({
+          api: this.api,
+          app: this.app,
+          showError: (error): void => {
+            this.pluginNoticeComponent.showNotice(String(error));
+          }
+        }).open();
+      },
+      id: 'check-redundant-tags',
+      name: 'Check redundant tags'
     });
     this.registerView(TAG_TREE_VIEW_TYPE, (leaf) =>
       new TagTreeView({

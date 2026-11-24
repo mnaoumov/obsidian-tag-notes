@@ -77,6 +77,18 @@ export async function showIndex(app: App): Promise<unknown> {
   return api.getCounts(app.vault.getFileByPath(`${folder}/Parent.md`));
 }
 
+export async function showRedundantTags(app: App): Promise<string> {
+  await configureCommunityPlugin({
+    app,
+    pluginId: PLUGIN_ID,
+    settings: { parentPropertyName: 'broader', tagFolderPath: 'Materials/07 Redundant tags/Tags', tagsPropertyName: 'keywords' }
+  });
+  if (!app.commands.executeCommandById('tag-notes:check-redundant-tags')) {
+    throw new Error('Enable Tag Notes first.');
+  }
+  return 'Ready. The Redundant tags window lists Seed order: Garden is implied by Tomatoes.';
+}
+
 export async function showTagTree(app: App): Promise<string> {
   await configureCommunityPlugin({
     app,

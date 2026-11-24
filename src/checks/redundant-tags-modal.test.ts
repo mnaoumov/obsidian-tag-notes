@@ -56,7 +56,7 @@ it('groups the redundant links by note and opens a note on click', async () => {
   expect(modal.contentEl.querySelector('p')?.textContent).toBe('2 notes link a tag that a narrower tag on the same note already implies. Nothing is changed.');
   const items = [...modal.contentEl.querySelectorAll(':scope > ul > li')];
   expect(items.map((item) => item.querySelector('a')?.textContent)).toEqual(['Notes/Seed order.md', 'Other.md']);
-  expect([...items[0]?.querySelectorAll('li') ?? []].map((item) => item.textContent)).toEqual([
+  expect([...(items[0]?.querySelectorAll('li') ?? [])].map((item) => item.textContent)).toEqual([
     'Garden is implied by Tomatoes',
     'Plants is implied by Garden, Tomatoes'
   ]);

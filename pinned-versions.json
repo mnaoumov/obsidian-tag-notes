@@ -10,13 +10,6 @@
     "present in the declared section."
   ],
   "pins": {
-    "@mnaoumov/obsidian-lib": {
-      "check": "node -e \"process.stdout.write(require('./node_modules/@mnaoumov/obsidian-dev-toolkit/package.json').peerDependencies['@mnaoumov/obsidian-lib'])\"",
-      "expect": "^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0",
-      "manualCheck": "When @mnaoumov/obsidian-dev-toolkit admits ^12.0.0 in its peer range, return to a caret range and let the sweep take 12.",
-      "section": "devDependencies",
-      "why": "@mnaoumov/obsidian-dev-toolkit 12.2.0 peer-requires obsidian-lib up to ^11.0.0, so a caret range lets the dependency sweep take 12.0.0 and npm refuses the tree (ERESOLVE). 11.0.0 is the last version the toolkit admits."
-    },
     "@puppeteer/browsers": {
       "check": "node -e \"const fs=require('node:fs');process.stdout.write(JSON.parse(fs.readFileSync('node_modules/@wdio/utils/package.json','utf8')).dependencies['@puppeteer/browsers'])\"",
       "expect": "^2.2.0",

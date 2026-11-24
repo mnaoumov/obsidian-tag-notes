@@ -37,10 +37,15 @@ interface ApplyHost {
   readonly apply: (choice: TagChoice, insertion: TagInsertion) => Promise<void>;
 }
 
+interface ApplyOptions {
+  readonly choice?: TagChoice;
+  readonly insertion?: TagInsertion;
+}
+
 interface Fixture {
   readonly alpha: TFile;
   readonly app: App;
-  readonly apply: (choice?: TagChoice, insertion?: TagInsertion) => Promise<void>;
+  readonly apply: (options?: ApplyOptions) => Promise<void>;
   readonly choice: TagChoice;
   readonly editor: Editor;
   readonly index: TagIndex;
@@ -83,8 +88,8 @@ function fixture(): Fixture {
   const choice: TagChoice = { file: alpha.asOriginalType2__(), name: 'Alpha' };
   return { alpha, app, apply, choice, editor, index, insertion, picker, settings, showError, source };
 
-  function apply(selected = choice, where = insertion): Promise<void> {
-    return castTo<ApplyHost>(picker).apply(selected, where);
+  function apply(options: ApplyOptions = {}): Promise<void> {
+    return castTo<ApplyHost>(picker).apply(options.choice ?? choice, options.insertion ?? insertion);
   }
 }
 
@@ -99,7 +104,7 @@ describe('tag selection', () => {
       vi.mocked(f.app.workspace.getActiveFile).mockReturnValue(f.alpha);
       return Promise.resolve(f.source);
     });
-    await expect(f.apply({ file: null, name: 'New' })).rejects.toThrow('note or tag changed');
+    await expect(f.apply({ choice: { file: null, name: 'New' } })).rejects.toThrow('note or tag changed');
     expect(f.editor.getValue()).toBe('Text @Alpha');
   });
   it('searches names, paths and aliases; disambiguates paths and only offers valid new names', () => {
@@ -152,7 +157,7 @@ describe('tag selection', () => {
       throw new Error('Fixture missing');
     }
     f.editor.setValue('Text @Alpha');
-    await f.apply({ file: bravo.asOriginalType2__(), name: 'Bravo' });
+    await f.apply({ choice: { file: bravo.asOriginalType2__(), name: 'Bravo' } });
     expect(parseFrontmatter(await f.app.vault.read(f.source))['keywords']).toEqual(['[[Alpha]]', '[[Bravo]]']);
     f.editor.setValue('Text @Alpha');
     await f.app.vault.modify(f.source, setFrontmatter('Text ', { keywords: '[[Alpha]]' }));
@@ -176,9 +181,9 @@ describe('tag selection', () => {
       const line = f.editor.lastLine();
       const insertion = { ...f.insertion, end: { ch: 11, line }, start: { ch: 5, line } };
       if (value === 'null') {
-        await f.apply(f.choice, insertion);
+        await f.apply({ choice: f.choice, insertion });
       } else {
-        await expect(f.apply({ file: null, name: 'New' }, insertion)).rejects.toThrow('list of strings');
+        await expect(f.apply({ choice: { file: null, name: 'New' }, insertion })).rejects.toThrow('list of strings');
         expect(f.editor.getValue()).toBe(content);
         expect(f.app.vault.getFileByPath('Tags/New.md')).toBeNull();
       }
@@ -190,13 +195,13 @@ describe('tag selection', () => {
     for (const folder of ['Concepts/Nested', '']) {
       f.settings.tagFolderPath = folder;
       f.editor.setValue('Text @Alpha');
-      await f.apply({ file: null, name: 'New' });
+      await f.apply({ choice: { file: null, name: 'New' } });
       const path = folder ? `${folder}/New.md` : 'New.md';
       expect(f.app.vault.getFileByPath(path)).not.toBeNull();
       f.editor.setValue('Text @Alpha');
-      await expect(f.apply({ file: null, name: 'New' })).rejects.toThrow('already exists');
+      await expect(f.apply({ choice: { file: null, name: 'New' } })).rejects.toThrow('already exists');
     }
-    await expect(f.apply({ file: null, name: '../Unsafe' })).rejects.toThrow('valid tag');
+    await expect(f.apply({ choice: { file: null, name: '../Unsafe' } })).rejects.toThrow('valid tag');
   });
 
   it('inserts a body mention in the generated link format without tagging', async () => {
@@ -220,7 +225,7 @@ describe('tag selection', () => {
       f.editor.setValue('Text changed');
       return Promise.resolve(f.source);
     });
-    await expect(f.apply({ file: null, name: 'New' })).rejects.toThrow('note or tag changed');
+    await expect(f.apply({ choice: { file: null, name: 'New' } })).rejects.toThrow('note or tag changed');
     await f.app.fileManager.trashFile(f.source);
     f.editor.setValue('Text @Alpha');
     await expect(f.apply()).rejects.toThrow('note changed');

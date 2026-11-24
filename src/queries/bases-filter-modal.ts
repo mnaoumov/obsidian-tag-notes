@@ -49,7 +49,7 @@ export class BasesFilterModal extends SuggestModal<TFile> {
           throw new Error('The tag changed. Choose it again.');
         }
         const expression = createBasesFilter(this.app, this.api, file, this.settings().tagsPropertyName);
-        await window.navigator.clipboard.writeText(expression);
+        await activeWindow.navigator.clipboard.writeText(expression);
         this.showNotice('Bases filter copied. Paste it into a Bases advanced filter. Copy again after changing the hierarchy.');
       } catch (error) {
         this.showNotice(`Could not copy Bases filter: ${String(error)}`);

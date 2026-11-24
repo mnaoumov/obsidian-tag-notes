@@ -144,6 +144,9 @@ export class Plugin extends PluginBase {
         settings: (): PluginSettings => this.indexSettings,
         showError: (error): void => {
           this.pluginNoticeComponent.showNotice(String(error));
+        },
+        showNotice: (message): void => {
+          this.pluginNoticeComponent.showNotice(message);
         }
       }));
     this.addCommand({

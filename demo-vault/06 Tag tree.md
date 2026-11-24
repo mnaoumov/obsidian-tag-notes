@@ -44,4 +44,15 @@ Right-click a tag for its menu:
 3. **Reveal in file explorer** shows where the tag note lives.
 4. **Collapse tags at this level** and **Expand tags at this level** fold or unfold every tag beside the clicked one that has children: right-click Work to fold Work and Home together. They are offered only where some tag at that level has children.
 
+## Move tags by drag and drop
+
+On desktop, drag a tag's row onto another tag:
+
+1. A plain drop **moves** it: the `broader` link to the branch you dragged it out of becomes a link to the tag you dropped it on. Drag the root `Reading` onto `Projects` and it moves under `Projects`.
+2. Hold **Ctrl** (**Cmd** on macOS) while dropping to **add** the target as another parent and keep the old one. Drag `Garden` from under `Home` onto `Work` with Ctrl held, and `Garden` appears under both.
+3. Drop a row on empty space in the tree, below the last row, to make it a root again: only the link to the branch it came from is removed. Drag `Waiting` from under `Work` there, and it stays under `Home` alone.
+4. A drop on the tag's own child, grandchild and so on is refused with a notice, because the hierarchy would become a cycle. Try dragging `Projects` onto `Garden`.
+
+The link is written in your vault's link format, and the rest of the tag note is left alone. To undo a move, drag the tag back.
+
 The tree keeps its collapsed branches, filter, sort and selection while the view stays open.

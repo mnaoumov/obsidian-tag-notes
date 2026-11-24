@@ -249,6 +249,89 @@ it('converts a case-insensitive core tags property and removes its original key'
   expect(frontmatter['keywords']).toBe('[[alpha]]');
 });
 
+it('converts one tag and the tags under it, leaving every other tag in place', async () => {
+  const app = App.createConfigured__({
+    files: {
+      'other.md': '---\ntags: [charlie]\n---\n#charlie',
+      'source.md': '---\ntags: [alpha, charlie]\nEmpty: null\n---\nSee #alpha/bravo, #alphabet and #charlie.\n'
+    }
+  });
+  const migration = new TagMigration({ app: app.asOriginalType__(), settings: new PluginSettings() });
+  const plan = await migration.preview('', { tag: '#alpha' });
+  expect(plan.tag).toBe('alpha');
+  expect(plan.notes.map((note) => note.file.path)).toEqual(['source.md']);
+  expect(plan.tags.map((tag) => tag.tag)).toEqual(['alpha', 'alpha/bravo']);
+  await migration.apply(plan);
+  const source = app.vault.getFileByPath('source.md');
+  if (!source) {
+    throw new Error('Missing source');
+  }
+  const content = await app.vault.read(source);
+  const frontmatter = parseFrontmatter(content);
+  expect(frontmatter.tags).toEqual(['charlie']);
+  expect(frontmatter['Empty']).toBeNull();
+  expect(frontmatter['keywords']).toEqual(['[[alpha]]', '[[bravo]]']);
+  expect(content).toContain('See [[bravo]], #alphabet and #charlie.');
+  expect(app.vault.getFileByPath('Tags/charlie.md')).toBeNull();
+});
+
+it('leaves an empty core tags property alone in a one-tag conversion and drops it in a full one', async () => {
+  const app = App.createConfigured__({ files: { 'source.md': '---\ntags:\n---\n#alpha' } });
+  const migration = new TagMigration({ app: app.asOriginalType__(), settings: new PluginSettings() });
+  await migration.apply(await migration.preview('', { tag: 'alpha' }));
+  const source = app.vault.getFileByPath('source.md');
+  if (!source) {
+    throw new Error('Missing source');
+  }
+  expect(Object.keys(parseFrontmatter(await app.vault.read(source)))).toContain('tags');
+  await app.vault.modify(source, '---\ntags:\n---\n#bravo');
+  await migration.apply(await migration.preview(''));
+  expect(Object.keys(parseFrontmatter(await app.vault.read(source)))).not.toContain('tags');
+});
+
+it('names a one-tag conversion the way the full conversion would when its leaf collides elsewhere', async () => {
+  const app = App.createConfigured__({ files: { 'one.md': '#alpha/bravo', 'two.md': '#charlie/bravo' } });
+  const plan = await new TagMigration({ app: app.asOriginalType__(), settings: new PluginSettings() }).preview('', { tag: 'alpha/bravo' });
+  expect(plan.tags.map((tag) => [tag.tag, tag.path, tag.alias])).toEqual([['alpha', 'Tags/alpha.md', null], ['alpha/bravo', 'Tags/bravo (alpha).md', 'bravo']]);
+});
+
+it('uses the chosen note as the tag note, adding the tag as an alias only when the names differ', async () => {
+  const app = App.createConfigured__({ files: { 'Concepts/Alpha concept.md': 'Body', 'Other/alpha.md': '', 'source.md': '#alpha #bravo' } });
+  const migration = new TagMigration({ app: app.asOriginalType__(), settings: new PluginSettings() });
+  const chosen = app.vault.getFileByPath('Concepts/Alpha concept.md');
+  const named = app.vault.getFileByPath('Other/alpha.md');
+  if (!chosen || !named) {
+    throw new Error('Missing notes');
+  }
+  const plan = await migration.preview('', { tag: 'alpha', tagNote: chosen.asOriginalType2__() });
+  expect(plan.tags).toEqual([expect.objectContaining({ alias: 'alpha', path: 'Concepts/Alpha concept.md', tag: 'alpha' })]);
+  await migration.apply(plan);
+  expect(parseFrontmatter(await app.vault.read(chosen)).aliases).toEqual(['alpha']);
+  expect(await app.vault.read(chosen)).toContain('Body');
+  const source = app.vault.getFileByPath('source.md');
+  if (!source) {
+    throw new Error('Missing source');
+  }
+  expect(parseFrontmatter(await app.vault.read(source))['keywords']).toBe('[[Alpha concept]]');
+  expect(await app.vault.read(source)).toContain('#bravo');
+  const second = await migration.preview('', { tag: 'bravo', tagNote: named.asOriginalType2__() });
+  expect(second.tags).toEqual([expect.objectContaining({ alias: 'bravo', path: 'Other/alpha.md' })]);
+  await app.vault.modify(source, '#alpha');
+  const exact = await migration.preview('', { tag: 'ALPHA', tagNote: named.asOriginalType2__() });
+  expect(exact.tags).toEqual([expect.objectContaining({ alias: null, path: 'Other/alpha.md' })]);
+});
+
+it('refuses an empty tag and a chosen note another tag already maps to', async () => {
+  const app = App.createConfigured__({ files: { 'source.md': '#Alpha #alpha', 'Tags/note.md': '' } });
+  const migration = new TagMigration({ app: app.asOriginalType__(), settings: new PluginSettings() });
+  await expect(migration.preview('', { tag: ' # ' })).rejects.toThrow('Choose a tag');
+  const note = app.vault.getFileByPath('Tags/note.md');
+  if (!note) {
+    throw new Error('Missing note');
+  }
+  await expect(migration.preview('', { tag: 'alpha', tagNote: note.asOriginalType2__() })).rejects.toThrow('Conflicting tag note path: Tags/note.md');
+});
+
 it.each([
   ['---\nplain\n---\n', 'Invalid properties'],
   ['---\nbroader: {alpha: bravo}\n---\n', 'Expected a string'],

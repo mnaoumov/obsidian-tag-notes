@@ -1,7 +1,10 @@
 import { PluginNoticeComponent } from '@mnaoumov/obsidian-lib/components/plugin-notice-component';
+// eslint-disable-next-line import-x/no-namespace -- Control the note picker the modal opens.
+import * as selectItemModule from '@mnaoumov/obsidian-lib/modals/select-item';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import {
   App,
+  Menu,
   Plugin as PluginHost
 } from 'obsidian-test-mocks/obsidian';
 import {
@@ -15,6 +18,7 @@ import type { RunBulkOperationParams } from './migration-modal.ts';
 
 import { PluginSettings } from '../plugin-settings.ts';
 import { Plugin } from '../plugin.ts';
+import { TAG_WRANGLER_MENU_EVENT } from './convert-tag-menus.ts';
 import { MigrationModal } from './migration-modal.ts';
 import { TagMigration } from './tag-migration.ts';
 
@@ -134,7 +138,59 @@ it('registers the conversion command and opens its modal through the plugin', as
     expect(notice).toHaveBeenCalledWith('Error: Command test');
   });
   modal.close();
+  const menu = Menu.create2__();
+  app.workspace.trigger(TAG_WRANGLER_MENU_EVENT, menu.asOriginalType2__(), 'alpha');
+  menu.menuItems__[0]?.onClick__?.(new MouseEvent('click'));
+  expect(open).toHaveBeenCalledTimes(2);
+  const tagModal = castTo<MigrationModal>(open.mock.instances[1]);
+  expect(tagModal.contentEl.textContent).toContain('Converts #alpha');
+  tagModal.close();
   plugin.unload();
+});
+
+it('converts one tag into a chosen existing note, and goes back to the default note on request', async () => {
+  const app = App.createConfigured__({ files: { 'Concepts/Alpha concept.md': '', 'source.md': '#alpha #bravo' } });
+  const showNotice = vi.fn();
+  const runBulkOperation = vi.fn(passThrough);
+  const chosen = app.vault.getFileByPath('Concepts/Alpha concept.md');
+  if (!chosen) {
+    throw new Error('Missing note');
+  }
+  const select = vi.spyOn(selectItemModule, 'selectItem').mockResolvedValueOnce(null).mockResolvedValueOnce(chosen.asOriginalType2__());
+  const modal = new MigrationModal({ app: app.asOriginalType__(), runBulkOperation, settings: new PluginSettings(), showNotice, tag: 'alpha' });
+  modal.onOpen();
+  expect(modal.contentEl.textContent).toContain('Converts #alpha and the tags under it');
+  expect(modal.contentEl.textContent).toContain('Reuse the note named after the tag');
+  click(modal, 'Choose existing note');
+  await vi.waitFor(() => {
+    expect(castTo<ModalHost>(modal).isBusy).toBe(false);
+  });
+  expect(modal.contentEl.textContent).toContain('Reuse the note named after the tag');
+  click(modal, 'Choose existing note');
+  await vi.waitFor(() => {
+    expect(modal.contentEl.textContent).toContain('Use Concepts/Alpha concept.md.');
+  });
+  const options = select.mock.calls[0]?.[0];
+  expect(options?.placeholder).toBe('Note for #alpha');
+  expect(options?.items.map((file) => options.itemTextFunction(file))).toEqual(['Concepts/Alpha concept.md', 'source.md']);
+  click(modal, 'Preview');
+  await vi.waitFor(() => {
+    expect(modal.contentEl.textContent).toContain('#alpha → Concepts/Alpha concept.md (reuse); alias alpha');
+  });
+  expect(modal.contentEl.textContent).toContain('removes #alpha and the tags under it from the core tags property');
+  expect(modal.contentEl.textContent).not.toContain('#bravo →');
+  click(modal, 'Use default');
+  expect(modal.contentEl.querySelector('.tag-notes-migration-preview')?.textContent).toBe('');
+  expect(modal.contentEl.textContent).toContain('Reuse the note named after the tag');
+  click(modal, 'Preview');
+  await vi.waitFor(() => {
+    expect(modal.contentEl.textContent).toContain('#alpha → Tags/alpha.md (create)');
+  });
+  click(modal, 'Convert');
+  await vi.waitFor(() => {
+    expect(showNotice).toHaveBeenCalledWith('Converted #alpha. Updated notes: 1.');
+  });
+  expect(runBulkOperation).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Convert #alpha in entire vault' }));
 });
 
 it('discards a preview if the folder changes while it is still being built', async () => {

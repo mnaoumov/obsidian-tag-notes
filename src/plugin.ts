@@ -13,6 +13,7 @@ import { invokeAsyncSafely } from '@mnaoumov/typescript-lib/async';
 import type { TagNotesApi } from '../api.d.ts';
 
 import { RedundantTagsModal } from './checks/redundant-tags-modal.ts';
+import { ConvertTagMenusComponent } from './migrations/convert-tag-menus.ts';
 import { MigrationModal } from './migrations/migration-modal.ts';
 import { PluginSettingsComponent } from './plugin-settings-component.ts';
 import { PluginSettingsTab } from './plugin-settings-tab.ts';
@@ -104,20 +105,25 @@ export class Plugin extends PluginBase {
       id: 'tag-this-note',
       name: 'Tag this note'
     });
+    const openConversion = (tag?: string): void => {
+      new MigrationModal({
+        app: this.app,
+        runBulkOperation: (params): Promise<void> => bulkOperationCommitComponent.runBulkOperation(params),
+        settings: this.indexSettings,
+        showNotice: (message): void => {
+          this.pluginNoticeComponent.showNotice(message);
+        },
+        ...(tag !== undefined && { tag })
+      }).open();
+    };
     this.addCommand({
       callback: () => {
-        new MigrationModal({
-          app: this.app,
-          runBulkOperation: (params): Promise<void> => bulkOperationCommitComponent.runBulkOperation(params),
-          settings: this.indexSettings,
-          showNotice: (message): void => {
-            this.pluginNoticeComponent.showNotice(message);
-          }
-        }).open();
+        openConversion();
       },
       id: 'convert-tags',
       name: 'Convert tags'
     });
+    this.addChild(new ConvertTagMenusComponent({ app: this.app, openConversion }));
     this.addCommand({
       callback: () => {
         new RedundantTagsModal({

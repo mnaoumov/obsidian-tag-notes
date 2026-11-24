@@ -57,6 +57,14 @@ function click(element: Element | null): void {
   element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
+function clickMenuItem(menu: Menu, title: string): void {
+  const item = menu.menuItems__.find((candidate) => candidate.title__ === title);
+  if (!item) {
+    throw new Error(`Missing ${title}`);
+  }
+  item.onClick__?.(new MouseEvent('click'));
+}
+
 function fixture(): Fixture {
   const app = App.createConfigured__({ files: { 'note.md': '', 'Tags/A.md': '', 'Tags/B.md': '', 'Tags/Child.md': '' } });
   const settings = new PluginSettings();
@@ -77,6 +85,11 @@ function fixture(): Fixture {
   const showError = vi.fn();
   const view = new TagTreeView({ api: index, leaf: app.workspace.getLeaf(false).asOriginalType3__(), settings: (): PluginSettings => settings, showError });
   return { a: a.asOriginalType2__(), app, b: b.asOriginalType2__(), child: child.asOriginalType2__(), host: castTo<ViewHost>(view), index, note: note.asOriginalType2__(), settings, showError, view };
+}
+
+function openRowMenu(content: HTMLElement, rowIndex: number): Menu {
+  content.querySelectorAll('.tag-notes-tree-row')[rowIndex]?.dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
+  return castTo<Menu>(vi.mocked(Menu.prototype.showAtMouseEvent).mock.instances.at(-1));
 }
 
 it('renders both parents, counts, collapse, ancestor-preserving filter and sort', async () => {
@@ -232,8 +245,8 @@ it('offers rename, child creation and reveal from the row context menu', async (
   const reveal = vi.spyOn(explorer, 'revealInFileExplorer').mockResolvedValue();
   f.view.contentEl.querySelector('.tag-notes-tree-row')?.dispatchEvent(new MouseEvent('contextmenu', { cancelable: true }));
   const menu = castTo<Menu>(show.mock.instances[0]);
-  expect(menu.menuItems__.map((item) => item.title__)).toEqual(['Rename', 'New child tag', 'Reveal in file explorer']);
-  for (const item of menu.menuItems__) {
+  expect(menu.menuItems__.map((item) => item.title__)).toEqual(['Rename', 'New child tag', 'Reveal in file explorer', 'Collapse tags at this level', 'Expand tags at this level']);
+  for (const item of menu.menuItems__.slice(0, 3)) {
     item.onClick__?.(new MouseEvent('click'));
   }
   await vi.waitFor(() => {
@@ -241,4 +254,30 @@ it('offers rename, child creation and reveal from the row context menu', async (
   });
   expect(rename).toHaveBeenCalledWith(f.a);
   expect(create).toHaveBeenCalledWith(f.a);
+});
+
+it('collapses and expands every branch from the toolbar', async () => {
+  const f = fixture();
+  await f.view.onOpen();
+  const content = f.view.contentEl;
+  const [collapseAll, expandAll] = [...content.querySelectorAll(':scope .tag-notes-controls .clickable-icon')];
+  expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(4);
+  click(collapseAll ?? null);
+  expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(2);
+  expect(content.querySelectorAll('.tag-notes-toggle[aria-expanded="false"]')).toHaveLength(2);
+  click(expandAll ?? null);
+  expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(4);
+});
+
+it('collapses and expands the branches at one level from the context menu, offered only where a sibling has children', async () => {
+  const f = fixture();
+  await f.view.onOpen();
+  const content = f.view.contentEl;
+  vi.spyOn(Menu.prototype, 'showAtMouseEvent');
+  // Rows: A, Child (under A), B, Child (under B). A leaf-only level offers no level actions.
+  expect(openRowMenu(content, 1).menuItems__.map((item) => item.title__)).toEqual(['Rename', 'New child tag', 'Reveal in file explorer']);
+  clickMenuItem(openRowMenu(content, 2), 'Collapse tags at this level');
+  expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(2);
+  clickMenuItem(openRowMenu(content, 0), 'Expand tags at this level');
+  expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(4);
 });

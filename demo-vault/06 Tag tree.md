@@ -33,13 +33,15 @@ Tag notes from the other demo notes appear in the tree too, because a linked tag
 2. Click **List notes** to list every note tagged with that tag or a descendant, below the tree. Try it on `Projects`.
 3. Type in the filter box at the top: `garden` keeps `Garden` and its ancestors `Home` and `Projects`.
 4. Switch the sort from **Name** to **Subtree count** to put the busiest tags first.
+5. Click **Collapse all** or **Expand all**, the two arrow buttons beside the sort, to fold or unfold every branch at once. While the filter box holds text, every matching branch stays open.
 
-## Rename, add a child, reveal
+## Rename, add a child, reveal, collapse a level
 
 Right-click a tag for its menu:
 
 1. **Rename** renames the tag note's file, so Obsidian rewrites every link to it and the tag keeps its notes.
 2. **New child tag** asks for a name and creates a note in the tag folder with `broader` linking the parent. It never overwrites an existing file.
 3. **Reveal in file explorer** shows where the tag note lives.
+4. **Collapse tags at this level** and **Expand tags at this level** fold or unfold every tag beside the clicked one that has children: right-click Work to fold Work and Home together. They are offered only where some tag at that level has children.
 
 The tree keeps its collapsed branches, filter, sort and selection while the view stays open.

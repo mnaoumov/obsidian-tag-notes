@@ -182,6 +182,29 @@ describe('TagIndex', () => {
     expect(f.index.getTaggedNotes(parent)).toEqual([]);
   });
 
+  it('reports a tag linked next to a descendant, naming the narrower tags, without editing notes', () => {
+    const f = fixture();
+    const root = f.add('Tags/root.md');
+    const middle = f.add('Tags/middle.md', { broader: 'Tags/root' });
+    const leaf = f.add('Tags/leaf.md', { broader: ['Tags/middle'] });
+    const other = f.add('Tags/other.md');
+    const both = f.add('b.md', { keywords: ['Tags/leaf', 'Tags/root', 'Tags/middle', 'Tags/other'] });
+    const single = f.add('a.md', { keywords: 'Tags/leaf' });
+    const siblings = f.add('c.md', { keywords: ['Tags/other', 'Tags/root'] });
+    const original = structuredClone(f.caches.get(both));
+    f.index.rebuild();
+    expect(f.index.getRedundantTags()).toEqual([
+      { narrower: [leaf], note: both, tag: middle },
+      { narrower: [leaf, middle], note: both, tag: root }
+    ]);
+    expect(f.caches.get(both)).toEqual(original);
+    expect(f.index.getTags(single)).toEqual([leaf]);
+    expect(f.index.getTags(siblings)).toEqual([other, root]);
+    f.caches.set(leaf, { frontmatter: {} });
+    f.index.rebuild();
+    expect(f.index.getRedundantTags()).toEqual([{ narrower: [middle], note: both, tag: root }]);
+  });
+
   it('ignores non-string scalar properties, nested entries, unresolved and non-markdown links', () => {
     const f = fixture();
     const tag = f.add('Tags/tag.md');

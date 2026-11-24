@@ -48,6 +48,7 @@ A copy of the vault ships with every release. You can access it via any of the f
 - **Tag this note** and the `@` suggester: choose a tag note by name or alias, or create one, and the link lands in the tags property: see [Tag this note](<./demo-vault/04 Tag this note.md>).
 - **Convert tags**: turn the `#tags` of the whole vault or one folder into tag notes, `#a/b` into `b` with `broader: [[a]]`, after a preview of every note it will change. In a vault kept in `git`, each run can be one commit that **Undo a bulk operation...** reverts: see [Convert tags](<./demo-vault/03 Convert tags.md>) and [undo with git](<./demo-vault/02 Settings.md#undo-with-git>).
 - **Queries and Bases**: a `tag-notes` code block lists the notes tagged with a tag, with or without its descendants, and **Copy Bases filter for tag subtree** exports a subtree as a core Bases filter: see [Queries and Bases](<./demo-vault/05 Queries and Bases.md>).
+- **Check redundant tags**: list every note that links a tag together with one of its descendants, such as `Garden` next to `Tomatoes` under it, naming the narrower tags that already imply it. It never edits a note: see [Redundant tags](<./demo-vault/07 Redundant tags.md>). The check is adapted from the dictionary check of `Tag Ontology` (MIT).
 
 Every setting is listed by its `data.json` key in [Settings](<./demo-vault/02 Settings.md>).
 

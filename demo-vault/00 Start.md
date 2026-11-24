@@ -23,3 +23,4 @@ Manual equivalent: create two tag notes, link the parent from the child's `broad
 4. [04 Tag this note](<./04 Tag this note.md>): choose by name or alias, create tags, and insert body mentions.
 5. [05 Queries and Bases](<./05 Queries and Bases.md>): live lists inside notes and a copied filter for core Bases.
 6. [06 Tag tree](<./06 Tag tree.md>): browse tag notes as a tree with counts, filter, sort and edit the hierarchy.
+7. [07 Redundant tags](<./07 Redundant tags.md>): list notes that link a tag next to one of its descendants.

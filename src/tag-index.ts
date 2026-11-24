@@ -8,6 +8,7 @@ import { ensureNonNullable } from '@mnaoumov/typescript-lib/type-guards';
 import { parseLinktext } from 'obsidian';
 
 import type {
+  RedundantTag,
   TagCounts,
   TaggedNotesOptions,
   TagNotesApi
@@ -57,16 +58,31 @@ export class TagIndex implements TagNotesApi {
   }
 
   public getDescendants(tag: TFile): TFile[] {
-    let result = this.descendants.get(tag);
-    if (!result) {
-      result = this.collect(tag, this.children);
-      this.descendants.set(tag, result);
-    }
-    return [...result];
+    return [...this.getDescendantSet(tag)];
   }
 
   public getParents(tag: TFile): TFile[] {
     return [...(this.parents.get(tag) ?? [])];
+  }
+
+  /**
+  Adapted from the redundant-tag check of `Tag Ontology` (https://github.com/namhyeonko/obsidian-tag-ontology),
+  `packages/tag-ontology/src/core/usage.ts`. Copyright (c) 2026 NamhyeonKo. MIT License.
+  */
+  public getRedundantTags(): RedundantTag[] {
+    const result: RedundantTag[] = [];
+    // `rebuild` fills `tags` in note path order.
+    for (const [note, tagSet] of this.tags) {
+      const tags = [...tagSet].sort(compareByPath);
+      for (const tag of tags) {
+        const descendants = this.getDescendantSet(tag);
+        const narrower = tags.filter((other) => descendants.has(other));
+        if (narrower.length > 0) {
+          result.push({ narrower, note, tag });
+        }
+      }
+    }
+    return result;
   }
 
   public getTaggedNotes(tag: TFile, options: TagIndexGetTaggedNotesOptions = {}): TFile[] {
@@ -101,7 +117,7 @@ export class TagIndex implements TagNotesApi {
     this.descendants.clear();
     const settings = this.settings();
     const folder = settings.tagFolderPath.replaceAll(/^\/+|\/+$/gu, '');
-    const files = this.app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path));
+    const files = this.app.vault.getMarkdownFiles().sort(compareByPath);
     for (const file of files) {
       if (folder === '' || file.path.startsWith(`${folder}/`)) {
         this.ensureTag(file);
@@ -179,6 +195,15 @@ export class TagIndex implements TagNotesApi {
     return null;
   }
 
+  private getDescendantSet(tag: TFile): Set<TFile> {
+    let result = this.descendants.get(tag);
+    if (!result) {
+      result = this.collect(tag, this.children);
+      this.descendants.set(tag, result);
+    }
+    return result;
+  }
+
   private readLinks(file: TFile, property: string): TFile[] {
     const cache: CachedMetadata | null = this.app.metadataCache.getFileCache(file);
     const value: unknown = cache?.frontmatter?.[property];
@@ -201,4 +226,8 @@ export class TagIndex implements TagNotesApi {
     }
     return [...result];
   }
+}
+
+function compareByPath(a: TFile, b: TFile): number {
+  return a.path.localeCompare(b.path);
 }

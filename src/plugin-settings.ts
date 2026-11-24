@@ -1,4 +1,5 @@
 export class PluginSettings {
+  public excludedFolders: string[] = [];
   public inlineTagConversion: 'keep' | 'link' | 'remove' = 'link';
   public insertBodyLink = false;
   public parentPropertyName = 'broader';

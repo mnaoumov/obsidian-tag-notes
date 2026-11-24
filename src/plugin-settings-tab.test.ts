@@ -27,6 +27,7 @@ interface BindingHost {
   readonly bind: (params: BindingParams) => void;
 }
 interface BindingParams {
+  readonly pluginSettingsToComponentValueConverter?: (value: unknown) => unknown;
   readonly propertyName: keyof PluginSettings;
   readonly valueComponent: TextComponent;
 }
@@ -40,7 +41,7 @@ interface VisibleDefinition {
 }
 
 describe('PluginSettingsTab', () => {
-  it('renders four bound text settings with defaults', async () => {
+  it('renders the bound text settings and the excluded folders text area', async () => {
     const app = App.createConfigured__();
     const plugin = new Plugin(app.asOriginalType__(), { author: 'test', description: 'test', id: 'tag-notes', minAppVersion: '1.14.4', name: 'Tag Notes', version: '0.0.0' });
     const component = new PluginSettingsComponent({
@@ -48,10 +49,12 @@ describe('PluginSettingsTab', () => {
       pluginEventSource: new AsyncEvents<PluginEventMap>()
     });
     await component.loadWithPromises();
+    await component.setProperty('excludedFolders', ['Templates', 'Archive/Old']);
     const tab = new PluginSettingsTab({ plugin, pluginSettingsComponent: component });
     // This tests our declarative bindings; the library owns the binding implementation.
-    vi.spyOn(castTo<BindingHost>(tab), 'bind').mockImplementation(({ propertyName, valueComponent }) => {
-      castTo<ValueSetter>(valueComponent).setValue(component.settings[propertyName]);
+    vi.spyOn(castTo<BindingHost>(tab), 'bind').mockImplementation(({ pluginSettingsToComponentValueConverter, propertyName, valueComponent }) => {
+      const value = component.settings[propertyName];
+      castTo<ValueSetter>(valueComponent).setValue(pluginSettingsToComponentValueConverter ? pluginSettingsToComponentValueConverter(value) : value);
     });
     const group = new SettingGroup(tab.containerEl);
     for (const definition of tab.getSettingDefinitions()) {
@@ -61,6 +64,7 @@ describe('PluginSettingsTab', () => {
     }
     expect(tab.containerEl.querySelectorAll<HTMLInputElement>('input')).toHaveLength(4);
     expect([...tab.containerEl.querySelectorAll<HTMLInputElement>('input')].map((input) => input.value)).toEqual(['keywords', 'Tags', 'broader', '@']);
+    expect([...tab.containerEl.querySelectorAll<HTMLTextAreaElement>('textarea')].map((textArea) => textArea.value)).toEqual(['Templates\nArchive/Old']);
     tab.hide();
   });
 

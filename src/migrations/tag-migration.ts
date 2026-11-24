@@ -19,6 +19,7 @@ import {
   parseFrontMatterTags
 } from 'obsidian';
 
+import { isInExcludedFolder } from '../excluded-folders.ts';
 import { PluginSettings } from '../plugin-settings.ts';
 import { toPropertyValue } from '../property-values.ts';
 
@@ -175,7 +176,10 @@ export class TagMigration {
     const concepts = new Set<string>();
     const allConcepts = new Set<string>();
     const snapshots = new Map<TFile, MigrationSnapshot>();
-    const files = this.app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path));
+    // Notes in excluded folders (templates, say) keep their tags and are never reused as tag notes.
+    const files = this.app.vault.getMarkdownFiles()
+      .filter((file) => !isInExcludedFolder(file.path, this.settings.excludedFolders))
+      .sort((a, b) => a.path.localeCompare(b.path));
     for (const file of files) {
       if (scope && !file.path.startsWith(`${scope}/`)) {
         continue;

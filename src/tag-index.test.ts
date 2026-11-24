@@ -86,6 +86,24 @@ describe('TagIndex', () => {
     expect(f.index.getTags(unknown)).toEqual([]);
     expect(f.index.getDescendants(unknown)).toEqual([]);
   });
+  it('never counts a note in an excluded folder as tagged, while a real note can still tag it', () => {
+    const f = fixture();
+    f.settings.excludedFolders = ['Templates', 'Tags/Drafts/'];
+    const tag = f.add('Tags/project.md');
+    f.add('Tags/Drafts/unused.md');
+    const template = f.add('Templates/project.md', { keywords: ['Tags/project'] });
+    f.add('Templates/sub/nested.md', { keywords: 'Tags/project' });
+    const note = f.add('note.md', { keywords: ['Tags/project', 'Templates/project'] });
+    f.index.rebuild();
+    expect(f.index.getTaggedNotes(tag)).toEqual([note]);
+    expect(f.index.getCounts(tag)).toEqual({ direct: 1, withDescendants: 1 });
+    expect(f.index.getTags(template)).toEqual([]);
+    expect(f.index.isTagNote(template)).toBe(true);
+    expect(f.index.getTagNotes().map((file) => file.path)).toEqual(['Tags/project.md', 'Templates/project.md']);
+    f.settings.excludedFolders = [];
+    f.index.rebuild();
+    expect(f.index.getCounts(tag).direct).toBe(3);
+  });
   it('reads a plain string tags or parent property as one link', () => {
     const f = fixture();
     const root = f.add('Tags/root.md');

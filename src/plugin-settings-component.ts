@@ -32,6 +32,9 @@ export class PluginSettingsComponent extends PluginSettingsComponentBase<PluginS
     this.registerValidator('tagFolderPath', (value) => {
       return value.split('/').some((part) => part === '..' || part === '.') || /[\\:*?"<>|]/u.test(value) ? 'Use a vault-relative folder path with forward slashes.' : undefined;
     });
+    this.registerValidator('excludedFolders', (value) => {
+      return value.some((folder) => folder.split('/').some((part) => part === '..' || part === '.') || /[\\:*?"<>|]/u.test(folder)) ? 'Use vault-relative folder paths with forward slashes, one per line.' : undefined;
+    });
     this.registerValidator('inlineTagConversion', (value) => {
       return ['keep', 'link', 'remove'].includes(value) ? undefined : 'Choose keep, link or remove.';
     });

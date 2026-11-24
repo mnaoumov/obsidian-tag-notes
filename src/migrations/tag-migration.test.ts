@@ -332,6 +332,24 @@ it('refuses an empty tag and a chosen note another tag already maps to', async (
   await expect(migration.preview('', { tag: 'alpha', tagNote: note.asOriginalType2__() })).rejects.toThrow('Conflicting tag note path: Tags/note.md');
 });
 
+it('leaves notes in excluded folders alone and never reuses one as a tag note', async () => {
+  const template = '---\ntags: [alpha, invalid tag]\n---\n#bravo\n';
+  const app = App.createConfigured__({ files: { 'source.md': '#alpha', 'Templates/alpha.md': template, 'Templates/sub/bravo.md': '#bravo' } });
+  const settings = new PluginSettings();
+  settings.excludedFolders = ['/Templates/'];
+  const migration = new TagMigration({ app: app.asOriginalType__(), settings });
+  const plan = await migration.preview('');
+  expect(plan.notes.map((note) => note.file.path)).toEqual(['source.md']);
+  expect(plan.tags).toEqual([expect.objectContaining({ existing: null, path: 'Tags/alpha.md', tag: 'alpha' })]);
+  await migration.apply(plan);
+  const file = app.vault.getFileByPath('Templates/alpha.md');
+  if (!file) {
+    throw new Error('Missing template');
+  }
+  expect(await app.vault.read(file)).toBe(template);
+  expect(app.vault.getFileByPath('Tags/alpha.md')).not.toBeNull();
+});
+
 it.each([
   ['---\nplain\n---\n', 'Invalid properties'],
   ['---\nbroader: {alpha: bravo}\n---\n', 'Expected a string'],

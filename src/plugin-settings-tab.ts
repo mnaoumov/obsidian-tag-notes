@@ -6,6 +6,8 @@ import { Platform } from 'obsidian';
 
 import type { PluginSettings } from './plugin-settings.ts';
 
+import { parseExcludedFolders } from './excluded-folders.ts';
+
 /**
  * The settings tab is declarative: return one definition per row from `getSettingDefinitionItems()` and
  * Obsidian renders them. `bind` wires a component to a settings property in both directions, so there is
@@ -30,6 +32,20 @@ export class PluginSettingsTab extends PluginSettingsTabBase<PluginSettings> {
       })
     );
     rows.push(
+      this.settingEx({
+        desc: 'One folder per line. Notes there, such as templates, never count as tagged notes, and Convert tags leaves them alone.',
+        name: 'Excluded folders',
+        render: (setting) => {
+          setting.addTextArea((textArea) => {
+            this.bind({
+              componentToPluginSettingsValueConverter: parseExcludedFolders,
+              pluginSettingsToComponentValueConverter: (folders: readonly string[]) => folders.join('\n'),
+              propertyName: 'excludedFolders',
+              valueComponent: textArea
+            });
+          });
+        }
+      }),
       this.settingEx({
         desc: 'Insert a link at the cursor instead of adding it to the tags property. A body link is a mention and does not tag the note.',
         name: 'Insert body link',

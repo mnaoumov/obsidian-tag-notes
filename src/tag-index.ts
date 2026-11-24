@@ -15,6 +15,8 @@ import type {
 } from '../api.d.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
+import { isInExcludedFolder } from './excluded-folders.ts';
+
 interface TagIndexConstructorParams {
   readonly app: App;
   readonly reportCycle: (paths: string[]) => void;
@@ -119,6 +121,10 @@ export class TagIndex implements TagNotesApi {
     const folder = settings.tagFolderPath.replaceAll(/^\/+|\/+$/gu, '');
     const files = this.app.vault.getMarkdownFiles().sort(compareByPath);
     for (const file of files) {
+      // A note in an excluded folder (a template, say) is never a tagged note; a link from a real note still makes it a tag.
+      if (isInExcludedFolder(file.path, settings.excludedFolders)) {
+        continue;
+      }
       if (folder === '' || file.path.startsWith(`${folder}/`)) {
         this.ensureTag(file);
       }

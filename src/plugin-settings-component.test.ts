@@ -34,6 +34,11 @@ describe('PluginSettingsComponent', () => {
     expect(await component.setProperty('suggestTrigger', '')).toBeTruthy();
     expect(await component.setProperty('suggestTrigger', 'two words')).toBeTruthy();
     expect(await component.setProperty('suggestTrigger', '::')).toBe('');
+    for (const value of [['Templates', '../Outside'], ['./Templates'], [String.raw`C:\Templates`]]) {
+      expect(await component.setProperty('excludedFolders', value)).toBeTruthy();
+    }
+    expect(await component.setProperty('excludedFolders', ['Templates', 'Archive/Old'])).toBe('');
+    expect(component.settings.excludedFolders).toEqual(['Templates', 'Archive/Old']);
   });
   it('takes its defaults from the PluginSettings class', async () => {
     const component = createComponent(undefined);

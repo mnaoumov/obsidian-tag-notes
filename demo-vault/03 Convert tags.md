@@ -20,6 +20,17 @@ Manual equivalent: set **Tags property** to `keywords`, **Parent property** to `
 3. Select **Preview**. Review every note to update and every new or reused tag note. Cancel now to leave the vault unchanged.
 4. Select **Convert**. Inspect Source's `keywords` and the new tag notes' `broader` properties.
 
+## Convert one tag
+
+Right-click a tag to convert just that tag and the tags under it. Every other tag stays as it is, in the note body and in the core `tags` property.
+
+1. Prepare the example with the button above, and open [Source](<./Materials/03 Convert tags/Source.md>).
+2. Right-click `#alpha/bravo` in the note, or the `bravo` row under `alpha` in the core Tags pane, and choose **Convert #alpha/bravo to tag note**.
+3. Under **Tag note**, keep the default (the note named after the tag, reused or created in the tag folder), or select **Choose existing note** to make any note the tag note. A chosen note named differently from the tag gets the tag's name as an alias. **Use default** goes back.
+4. Select **Preview**: only `#alpha/bravo` and its parent `alpha` are listed. Select **Convert**; `#charlie/bravo` is still a plain tag afterwards.
+
+A one-tag conversion names its tag notes exactly as a full conversion of the same folder would, so `#alpha/bravo` still becomes `bravo (alpha)` while `#charlie/bravo` exists.
+
 ## What changes
 
 `#alpha/bravo` and `#charlie/bravo` become separate tag notes, `bravo (alpha)` and `bravo (charlie)`, each with alias `bravo` and a link to its parent. The migration also creates missing ancestors, at any depth. A collision's qualifier uses its full parent path, with slashes replaced by ` - `; a root tag sharing a leaf uses `(root)`.

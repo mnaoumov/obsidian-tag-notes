@@ -10,5 +10,9 @@
   .tag-notes-tree-row { padding-block: var(--size-2-1); }
   .tag-notes-tag { flex: 1; overflow: hidden; text-overflow: ellipsis; }
   .tag-notes-counts { white-space: nowrap; }
+  .tag-notes-tree-row.is-dragging { opacity: 0.5; }
+  .tag-notes-tree-row.is-drop-target { background-color: var(--background-modifier-hover); border-radius: var(--radius-s); outline: 1px solid var(--interactive-accent); }
+  .tag-notes-tree.is-drop-target { border-radius: var(--radius-s); outline: 1px dashed var(--interactive-accent); }
+  .tag-notes-tree { min-height: var(--size-4-12); }
   .tag-notes-note { display: block; margin-block: var(--size-2-2); max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
 }

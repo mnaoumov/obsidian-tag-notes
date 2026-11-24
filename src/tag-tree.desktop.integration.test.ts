@@ -103,3 +103,90 @@ it('creates and renames child tags through the real context menu and keeps links
   expect(result.created).toContain('TreeParent');
   expect(result.renamed).toContain('RenamedParent');
 });
+
+it('moves, adds and removes parents by dragging rows, and refuses a drop under a descendant', async () => {
+  const result = await evalInObsidian({
+    async callback({ app, lib: { waitUntil } }) {
+      await app.vault.create('Tags/DragA.md', '');
+      await app.vault.create('Tags/DragB.md', '');
+      const child = await app.vault.create('Tags/DragChild.md', '---\nbroader: "[[DragA]]"\n---\n');
+      const leaf = app.workspace.getLeavesOfType('tag-notes-tree')[0];
+      if (!leaf) {
+        throw new Error('Tree missing');
+      }
+      const content = leaf.view.containerEl;
+      const tree = content.querySelector<HTMLElement>('.tag-notes-tree');
+      if (!tree) {
+        throw new Error('Tree element missing');
+      }
+      function findRow(name: string, parent: null | string): HTMLElement {
+        const row = [...content.querySelectorAll<HTMLElement>('.tag-notes-tree-row')].find((entry) => {
+          const parentRow = entry.parentElement?.parentElement?.closest('.tag-notes-branch')?.querySelector(':scope > .tag-notes-tree-row');
+          return entry.querySelector('.tag-notes-tag')?.textContent === name && (parentRow?.querySelector('.tag-notes-tag')?.textContent ?? null) === parent;
+        });
+        if (!row) {
+          throw new Error(`Row ${name} under ${String(parent)} missing`);
+        }
+        return row;
+      }
+      function dispatchDrag(element: HTMLElement, type: string, dataTransfer: DataTransfer, isCtrlPressed = false): void {
+        // eslint-disable-next-line obsidian-dev-toolkit/no-untrusted-input-events -- `sendInputEvent` cannot express a drag; the view's listeners act on untrusted events, which the file assertions prove.
+        element.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, ctrlKey: isCtrlPressed, dataTransfer }));
+      }
+      function dragTo(source: HTMLElement, target: HTMLElement, isCtrlPressed = false): void {
+        const dataTransfer = new DataTransfer();
+        dispatchDrag(source, 'dragstart', dataTransfer);
+        dispatchDrag(target, 'dragover', dataTransfer, isCtrlPressed);
+        dispatchDrag(target, 'drop', dataTransfer, isCtrlPressed);
+        dispatchDrag(source, 'dragend', dataTransfer);
+      }
+      async function waitForText(message: string, isExpected: (text: string) => boolean): Promise<string> {
+        let text = '';
+        await waitUntil({
+          message,
+          predicate: async () => {
+            text = await app.vault.read(child);
+            return isExpected(text);
+          },
+          timeoutInMilliseconds: 2500
+        });
+        return text;
+      }
+      await waitUntil({ message: 'drag rows rendered', predicate: () => content.textContent.includes('DragChild'), timeoutInMilliseconds: 2500 });
+      dragTo(findRow('DragChild', 'DragA'), findRow('DragB', null));
+      const moved = await waitForText('moved under DragB', (text) => text.includes('DragB') && !text.includes('DragA'));
+      await waitUntil({
+        message: 'tree shows the move',
+        predicate: () => {
+          try {
+            return findRow('DragChild', 'DragB').isConnected;
+          } catch {
+            return false;
+          }
+        },
+        timeoutInMilliseconds: 2500
+      });
+      dragTo(findRow('DragChild', 'DragB'), findRow('DragA', null), true);
+      const added = await waitForText('DragA added as a second parent', (text) => text.includes('DragA') && text.includes('DragB'));
+      await waitUntil({ message: 'child shown under both parents', predicate: () => content.textContent.split('DragChild').length === 3, timeoutInMilliseconds: 2500 });
+      dragTo(findRow('DragA', null), findRow('DragChild', 'DragA'));
+      await waitUntil({ message: 'cycle notice shown', predicate: () => [...document.querySelectorAll('.notice')].some((notice) => notice.textContent.includes('would become a cycle')), timeoutInMilliseconds: 2500 });
+      const dragA = app.vault.getFileByPath('Tags/DragA.md');
+      if (!dragA) {
+        throw new Error('DragA missing');
+      }
+      const afterCycle = await app.vault.read(dragA);
+      const source = findRow('DragChild', 'DragA');
+      const dataTransfer = new DataTransfer();
+      dispatchDrag(source, 'dragstart', dataTransfer);
+      dispatchDrag(tree, 'dragover', dataTransfer);
+      dispatchDrag(tree, 'drop', dataTransfer);
+      const rooted = await waitForText('DragA link removed', (text) => !text.includes('DragA'));
+      return { added, afterCycle, moved, rooted };
+    }
+  });
+  expect(result.moved).toContain('broader: "[[DragB]]"');
+  expect(result.added).toContain('  - "[[DragB]]"\n  - "[[DragA]]"');
+  expect(result.afterCycle).toBe('');
+  expect(result.rooted).toContain('broader: "[[DragB]]"');
+});

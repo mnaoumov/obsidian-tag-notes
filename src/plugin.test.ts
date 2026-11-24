@@ -44,6 +44,7 @@ import { TagSuggest } from './tagging/tag-suggest.ts';
 
 interface ChildHost {
   readonly createChild: (tag: TFile) => Promise<void>;
+  readonly showNotice: (message: string) => void;
 }
 interface IsEnabledHost {
   readonly isEnabled: () => boolean;
@@ -244,6 +245,8 @@ describe('TagNotes', () => {
     await vi.waitFor(() => {
       expect(notice).toHaveBeenCalledWith('Error: Cannot open');
     });
+    castTo<ChildHost>(other).showNotice('Drop refused');
+    expect(notice).toHaveBeenCalledWith('Drop refused');
     open.mockRestore();
     vi.spyOn(prompts, 'prompt').mockResolvedValue('New');
     const parent = app.vault.getFileByPath('Tags/tag.md');

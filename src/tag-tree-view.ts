@@ -13,30 +13,49 @@ import {
   ExtraButtonComponent,
   ItemView,
   Menu,
-  normalizePath
+  normalizePath,
+  Platform
 } from 'obsidian';
 
 import type { TagNotesApi } from '../api.d.ts';
 import type { PluginSettings } from './plugin-settings.ts';
 
+import { moveTag } from './tag-tree-drop.ts';
+
 export const TAG_TREE_VIEW_TYPE = 'tag-notes-tree';
 const CONTROL_CHARACTER = /\p{Cc}/u;
+
+interface PendingBranch {
+  readonly container: HTMLElement;
+  readonly level: readonly TFile[];
+  readonly parent: null | TFile;
+  readonly tag: TFile;
+}
+
+interface TagDrag {
+  readonly fromParent: null | TFile;
+  readonly tag: TFile;
+}
 
 interface TagTreeViewConstructorParams {
   readonly api: TagNotesApi;
   readonly leaf: WorkspaceLeaf;
   readonly settings: () => PluginSettings;
   readonly showError: (error: unknown) => void;
+  readonly showNotice: (message: string) => void;
 }
 
 export class TagTreeView extends ItemView {
   private readonly api: TagNotesApi;
   private readonly collapsed = new Set<TFile>();
+  private drag: null | TagDrag = null;
+  private dropTargetEl: HTMLElement | null = null;
   private filter = '';
   private resultsEl: HTMLElement | null = null;
   private selectedTag: null | TFile = null;
   private readonly settings: () => PluginSettings;
   private readonly showError: (error: unknown) => void;
+  private readonly showNotice: (message: string) => void;
   private sortByCount = false;
   private treeEl: HTMLElement | null = null;
 
@@ -45,6 +64,7 @@ export class TagTreeView extends ItemView {
     this.api = params.api;
     this.settings = params.settings;
     this.showError = params.showError;
+    this.showNotice = params.showNotice;
   }
 
   public override getDisplayText(): string {
@@ -84,7 +104,20 @@ export class TagTreeView extends ItemView {
       this.setCollapsed(this.api.getTagNotes(), false);
     });
     this.contentEl.createEl('p', { cls: 'tag-notes-legend', text: 'Counts: direct / including descendants' });
-    this.treeEl = this.contentEl.createDiv({ cls: 'tag-notes-tree' });
+    const tree = this.contentEl.createDiv({ cls: 'tag-notes-tree' });
+    this.treeEl = tree;
+    // Rows stop propagation, so these see only drops on empty tree space: they make the dragged tag a root.
+    this.registerDomEvent(tree, 'dragover', ($event) => {
+      this.dragOver($event, tree);
+    });
+    this.registerDomEvent(tree, 'dragleave', ($event) => {
+      if ($event.target === tree) {
+        this.setDropTarget(null);
+      }
+    });
+    this.registerDomEvent(tree, 'drop', ($event) => {
+      this.dropOn(null, $event);
+    });
     this.resultsEl = this.contentEl.createDiv({ cls: 'tag-notes-results' });
     this.refresh();
     return noopAsync();
@@ -111,7 +144,7 @@ export class TagTreeView extends ItemView {
     const roots = tags.filter((tag) => this.api.getParents(tag).length === 0);
     // Iterative rendering supports deep hierarchies without using the JS call stack.
     const sortedRoots = this.sortTags(roots);
-    const pending = [...sortedRoots].reverse().map((tag) => ({ container: tree, level: sortedRoots, tag }));
+    const pending: PendingBranch[] = [...sortedRoots].reverse().map((tag) => ({ container: tree, level: sortedRoots, parent: null, tag }));
     for (let entry = pending.pop(); entry; entry = pending.pop()) {
       if (!visible.has(entry.tag)) {
         continue;
@@ -147,11 +180,12 @@ export class TagTreeView extends ItemView {
         $event.preventDefault();
         this.showMenu(tag, level, $event);
       });
+      this.registerDrag(row, { fromParent: entry.parent, tag });
       if (!isExpanded) {
         continue;
       }
       const container = branch.createDiv({ cls: 'tag-notes-children' });
-      pending.push(...[...children].reverse().map((child) => ({ container, level: children, tag: child })));
+      pending.push(...[...children].reverse().map((child) => ({ container, level: children, parent: tag, tag: child })));
     }
     if (!tree.childElementCount) {
       tree.createEl('p', { text: tags.length > 0 ? 'No matching tag notes.' : 'No tag notes yet. Link a note from your tags property or add a note to the tag folder.' });
@@ -172,6 +206,71 @@ export class TagTreeView extends ItemView {
     const link = this.app.fileManager.generateMarkdownLink(parent, path);
     const file = await this.app.vault.create(path, setFrontmatter('', { [this.settings().parentPropertyName]: [link] }));
     await this.app.workspace.getLeaf(false).openFile(file);
+  }
+
+  private dragOver($event: DragEvent, element: HTMLElement): void {
+    if (!this.drag) {
+      return;
+    }
+    $event.preventDefault();
+    $event.stopPropagation();
+    if ($event.dataTransfer) {
+      $event.dataTransfer.dropEffect = isAddParentEvent($event) ? 'copy' : 'move';
+    }
+    this.setDropTarget(element);
+  }
+
+  private dropOn(target: null | TFile, $event: DragEvent): void {
+    const drag = this.drag;
+    this.drag = null;
+    this.setDropTarget(null);
+    if (!drag) {
+      return;
+    }
+    $event.preventDefault();
+    $event.stopPropagation();
+    if (target) {
+      this.collapsed.delete(target);
+    }
+    this.run(async () => {
+      const refusal = await moveTag({
+        api: this.api,
+        app: this.app,
+        fromParent: drag.fromParent,
+        parentPropertyName: this.settings().parentPropertyName,
+        shouldAddParent: isAddParentEvent($event),
+        tag: drag.tag,
+        target
+      });
+      if (refusal !== null) {
+        this.showNotice(refusal);
+      }
+    });
+  }
+
+  private registerDrag(row: HTMLElement, drag: TagDrag): void {
+    row.draggable = true;
+    row.addEventListener('dragstart', ($event): void => {
+      this.drag = drag;
+      row.addClass('is-dragging');
+      if (!$event.dataTransfer) {
+        return;
+      }
+
+      $event.dataTransfer.effectAllowed = 'copyMove';
+      $event.dataTransfer.setData('text/plain', drag.tag.path);
+    });
+    row.addEventListener('dragend', (): void => {
+      this.drag = null;
+      row.removeClass('is-dragging');
+      this.setDropTarget(null);
+    });
+    row.addEventListener('dragover', ($event): void => {
+      this.dragOver($event, row);
+    });
+    row.addEventListener('drop', ($event): void => {
+      this.dropOn(drag.tag, $event);
+    });
   }
 
   private async rename(tag: TFile): Promise<void> {
@@ -231,6 +330,15 @@ export class TagTreeView extends ItemView {
     this.refresh();
   }
 
+  private setDropTarget(element: HTMLElement | null): void {
+    if (this.dropTargetEl === element) {
+      return;
+    }
+    this.dropTargetEl?.removeClass('is-drop-target');
+    this.dropTargetEl = element;
+    element?.addClass('is-drop-target');
+  }
+
   private showMenu(tag: TFile, level: readonly TFile[], $event: MouseEvent): void {
     const menu = new Menu();
     menu.addItem((item) =>
@@ -271,4 +379,14 @@ export class TagTreeView extends ItemView {
   private validateName(value: string): null | string {
     return !value.trim() || /[\\/:*?"<>|]/u.test(value) || CONTROL_CHARACTER.test(value) ? 'Enter a note name without path separators or reserved filename characters.' : null;
   }
+}
+
+/**
+ * Ctrl, or Cmd on macOS, held while dropping adds the target as another parent instead of moving.
+ *
+ * @param $event - The drag event.
+ * @returns Whether the drop adds a parent.
+ */
+function isAddParentEvent($event: DragEvent): boolean {
+  return Platform.isMacOS ? $event.metaKey : $event.ctrlKey;
 }

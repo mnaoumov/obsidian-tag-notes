@@ -7,7 +7,8 @@ import * as prompts from '@mnaoumov/obsidian-lib/modals/prompt';
 import { castTo } from '@mnaoumov/typescript-lib/object-utils';
 import {
   App,
-  Menu
+  Menu,
+  Platform
 } from 'obsidian-test-mocks/obsidian';
 import {
   afterEach,
@@ -18,6 +19,8 @@ import {
 
 import { PluginSettings } from './plugin-settings.ts';
 import { TagIndex } from './tag-index.ts';
+// eslint-disable-next-line import-x/no-namespace -- Spy on the real drop export without replacing the module.
+import * as drops from './tag-tree-drop.ts';
 import {
   TAG_TREE_VIEW_TYPE,
   TagTreeView
@@ -33,6 +36,7 @@ interface Fixture {
   readonly note: TFile;
   readonly settings: PluginSettings;
   readonly showError: ReturnType<typeof vi.fn>;
+  readonly showNotice: ReturnType<typeof vi.fn>;
   readonly view: TagTreeView;
 }
 
@@ -83,8 +87,9 @@ function fixture(): Fixture {
   const index = new TagIndex({ app: app.asOriginalType__(), reportCycle: vi.fn(), settings: (): PluginSettings => settings });
   index.rebuild();
   const showError = vi.fn();
-  const view = new TagTreeView({ api: index, leaf: app.workspace.getLeaf(false).asOriginalType3__(), settings: (): PluginSettings => settings, showError });
-  return { a: a.asOriginalType2__(), app, b: b.asOriginalType2__(), child: child.asOriginalType2__(), host: castTo<ViewHost>(view), index, note: note.asOriginalType2__(), settings, showError, view };
+  const showNotice = vi.fn();
+  const view = new TagTreeView({ api: index, leaf: app.workspace.getLeaf(false).asOriginalType3__(), settings: (): PluginSettings => settings, showError, showNotice });
+  return { a: a.asOriginalType2__(), app, b: b.asOriginalType2__(), child: child.asOriginalType2__(), host: castTo<ViewHost>(view), index, note: note.asOriginalType2__(), settings, showError, showNotice, view };
 }
 
 function openRowMenu(content: HTMLElement, rowIndex: number): Menu {
@@ -280,4 +285,131 @@ it('collapses and expands the branches at one level from the context menu, offer
   expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(2);
   clickMenuItem(openRowMenu(content, 0), 'Expand tags at this level');
   expect(content.querySelectorAll('.tag-notes-tag')).toHaveLength(4);
+});
+
+interface FakeDataTransfer {
+  readonly dropEffect: string;
+  readonly effectAllowed: string;
+  readonly setData: ReturnType<typeof vi.fn>;
+}
+
+function dispatchDrag(element: Element | null | undefined, type: string, init: MouseEventInit = {}, dataTransfer: FakeDataTransfer | null = null): MouseEvent {
+  if (!element) {
+    throw new Error('Missing drag element');
+  }
+  const $event = new MouseEvent(type, { bubbles: true, cancelable: true, ...init });
+  Object.defineProperty($event, 'dataTransfer', { value: dataTransfer });
+  element.dispatchEvent($event);
+  return $event;
+}
+
+function fakeDataTransfer(): FakeDataTransfer {
+  return { dropEffect: 'none', effectAllowed: 'none', setData: vi.fn() };
+}
+
+it('moves a dragged tag under the row it is dropped on, from the branch it was dragged out of', async () => {
+  const f = fixture();
+  await f.view.onOpen();
+  const move = vi.spyOn(drops, 'moveTag').mockResolvedValue(null);
+  // Rows render A, Child under A, B, Child under B.
+  const rows = [...f.view.contentEl.querySelectorAll('.tag-notes-tree-row')];
+  expect(rows.map((row) => row.querySelector('.tag-notes-tag')?.textContent)).toEqual(['A', 'Child', 'B', 'Child']);
+  expect(rows.every((row) => row.getAttribute('draggable') === 'true')).toBe(true);
+  const transfer = fakeDataTransfer();
+  dispatchDrag(rows[1], 'dragstart', {}, transfer);
+  expect(rows[1]?.classList.contains('is-dragging')).toBe(true);
+  expect(transfer.effectAllowed).toBe('copyMove');
+  expect(transfer.setData).toHaveBeenCalledWith('text/plain', 'Tags/Child.md');
+  const over = dispatchDrag(rows[2], 'dragover', {}, transfer);
+  expect(over.defaultPrevented).toBe(true);
+  expect(transfer.dropEffect).toBe('move');
+  expect(rows[2]?.classList.contains('is-drop-target')).toBe(true);
+  dispatchDrag(rows[2], 'dragover', { ctrlKey: true }, transfer);
+  expect(transfer.dropEffect).toBe('copy');
+  dispatchDrag(rows[0], 'dragover', {}, transfer);
+  expect(rows[2]?.classList.contains('is-drop-target')).toBe(false);
+  dispatchDrag(rows[2], 'drop', {});
+  expect(rows[0]?.classList.contains('is-drop-target')).toBe(false);
+  await vi.waitFor(() => {
+    expect(move).toHaveBeenCalledWith(expect.objectContaining({ fromParent: f.a, parentPropertyName: 'broader', shouldAddParent: false, tag: f.child, target: f.b }));
+  });
+  dispatchDrag(rows[1], 'dragend');
+  expect(rows[1]?.classList.contains('is-dragging')).toBe(false);
+});
+
+it('adds a parent with Ctrl, or Cmd on macOS, and expands a collapsed target', async () => {
+  const f = fixture();
+  await f.view.onOpen();
+  const move = vi.spyOn(drops, 'moveTag').mockResolvedValue(null);
+  click(f.view.contentEl.querySelector('.tag-notes-toggle'));
+  const rows = [...f.view.contentEl.querySelectorAll('.tag-notes-tree-row')];
+  expect(rows).toHaveLength(3);
+  dispatchDrag(rows[2], 'dragstart');
+  dispatchDrag(rows[0], 'drop', { ctrlKey: true });
+  await vi.waitFor(() => {
+    expect(move).toHaveBeenCalledWith(expect.objectContaining({ fromParent: f.b, shouldAddParent: true, target: f.a }));
+  });
+  f.view.refresh();
+  expect(f.view.contentEl.querySelectorAll('.tag-notes-tree-row')).toHaveLength(4);
+  const isMacOS = Platform.isMacOS;
+  Platform.isMacOS = true;
+  try {
+    const macRows = [...f.view.contentEl.querySelectorAll('.tag-notes-tree-row')];
+    dispatchDrag(macRows[3], 'dragstart');
+    dispatchDrag(macRows[0], 'drop', { ctrlKey: true });
+    dispatchDrag(macRows[3], 'dragstart');
+    dispatchDrag(macRows[0], 'drop', { metaKey: true });
+  } finally {
+    Platform.isMacOS = isMacOS;
+  }
+  await vi.waitFor(() => {
+    expect(move.mock.calls.map(([params]) => params.shouldAddParent)).toEqual([true, false, true]);
+  });
+});
+
+it('makes a dragged tag a root on a drop on empty tree space, and shows a refused drop as a notice', async () => {
+  const f = fixture();
+  await f.view.onOpen();
+  const move = vi.spyOn(drops, 'moveTag').mockResolvedValue('Refused');
+  const tree = f.view.contentEl.querySelector('.tag-notes-tree');
+  const rows = [...f.view.contentEl.querySelectorAll('.tag-notes-tree-row')];
+  dispatchDrag(rows[1], 'dragstart');
+  const transfer = fakeDataTransfer();
+  dispatchDrag(tree, 'dragover', {}, transfer);
+  expect(tree?.classList.contains('is-drop-target')).toBe(true);
+  dispatchDrag(rows[0], 'dragleave');
+  expect(tree?.classList.contains('is-drop-target')).toBe(true);
+  dispatchDrag(tree, 'dragleave');
+  expect(tree?.classList.contains('is-drop-target')).toBe(false);
+  dispatchDrag(tree, 'dragover', {}, transfer);
+  dispatchDrag(tree, 'drop');
+  expect(tree?.classList.contains('is-drop-target')).toBe(false);
+  await vi.waitFor(() => {
+    expect(f.showNotice).toHaveBeenCalledWith('Refused');
+  });
+  expect(move).toHaveBeenCalledWith(expect.objectContaining({ fromParent: f.a, tag: f.child, target: null }));
+  move.mockRejectedValue(new Error('Write failed'));
+  dispatchDrag(rows[1], 'dragstart');
+  dispatchDrag(rows[2], 'drop');
+  await vi.waitFor(() => {
+    expect(f.showError).toHaveBeenCalled();
+  });
+});
+
+it('ignores drags that did not start on a tag row', async () => {
+  const f = fixture();
+  await f.view.onOpen();
+  const move = vi.spyOn(drops, 'moveTag');
+  const rows = [...f.view.contentEl.querySelectorAll('.tag-notes-tree-row')];
+  const over = dispatchDrag(rows[0], 'dragover', {}, fakeDataTransfer());
+  expect(over.defaultPrevented).toBe(false);
+  const drop = dispatchDrag(rows[0], 'drop');
+  expect(drop.defaultPrevented).toBe(false);
+  dispatchDrag(f.view.contentEl.querySelector('.tag-notes-tree'), 'drop');
+  dispatchDrag(rows[1], 'dragstart');
+  dispatchDrag(rows[1], 'dragend');
+  dispatchDrag(rows[0], 'drop');
+  dispatchDrag(rows[1], 'dragstart');
+  dispatchDrag(rows[0], 'dragover');
+  expect(move).not.toHaveBeenCalled();
 });

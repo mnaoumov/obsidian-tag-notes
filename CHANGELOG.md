@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 1.1.0
+
+This release has 6 new features, 1 fix and 3 documentation changes. 3 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.
+
+### New
+
+- excluded folders whose notes never count as tagged, adapted from Unified Tag Links
+- move a tag in the tag tree by drag and drop, Ctrl adds a parent, adapted from Link Structure
+- convert one #tag and its sub-tags to a tag note from its context menu, adapted from Unified Tag Links
+- collapse or expand every tag tree branch, or every tag at one level, adapted from Tag Wrangler
+- add Check redundant tags, listing notes that link a tag next to its descendant
+- read a tag or parent property holding one link as text, and write one link as text
+
+### Fixed
+
+- **deps:** keep `obsidian-lib` 12, which `obsidian-dev-toolkit` 13 still requires as a peer
+
+### Documentation
+
+- say the Open demo vault command is desktop-only
+- refresh the See also comparison table
+- switch the README to the plugin badge line
+
 ## 1.0.1
 
 This release has 1 fix and 2 documentation changes. 8 maintenance commits (tests, build, CI, refactoring, dependencies) are not listed.

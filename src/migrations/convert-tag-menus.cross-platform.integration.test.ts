@@ -8,6 +8,8 @@ it('converts only the tag under the editor caret from its context menu, after a 
   const result = await evalInObsidian({
     async callback({ app, lib: { waitUntil }, obsidianModule: { MarkdownView, Menu, parseYaml } }) {
       const timeoutInMilliseconds = 2500;
+      // The assertion below expects a wikilink: pin the vault's link format so another file's setting cannot leak in.
+      app.vault.setConfig('useMarkdownLinks', false);
       const source = await app.vault.create('Scoped source.md', '---\ntags: [ScopedKeep]\n---\nSee #ScopedAlpha/ScopedBravo and #ScopedOther.\n');
       await waitUntil({ message: 'source tags cached', predicate: () => (app.metadataCache.getFileCache(source)?.tags?.length ?? 0) === 2, timeoutInMilliseconds });
       const leaf = app.workspace.getLeaf(true);

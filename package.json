@@ -47,7 +47,7 @@
     "@microsoft/eslint-plugin-sdl": {
       "eslint-plugin-n": "^17.24.0"
     },
-    "@puppeteer/browsers": "^3.2.7",
+    "@puppeteer/browsers": "^3.3.0",
     "deepmerge-ts": "^8.0.2",
     "eslint-plugin-tsdoc": {
       "minimatch": "^11.0.5"
@@ -60,17 +60,17 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
     "@mnaoumov/obsidian-dev-toolkit": "^13.0.0",
-    "@mnaoumov/obsidian-lib": "^12.0.0",
-    "@mnaoumov/typescript-dev-toolkit": "^10.0.0",
+    "@mnaoumov/obsidian-lib": "^13.0.0",
+    "@mnaoumov/typescript-dev-toolkit": "^11.1.1",
     "@mnaoumov/typescript-lib": "^4.1.0",
     "@obsidian-typings/obsidian-public-latest": "^6.64.0",
     "@tsconfig/strictest": "^2.0.9",
-    "@types/node": "^26.6.7",
-    "@vitest/coverage-v8": "^5.1.1",
+    "@types/node": "^26.6.11",
+    "@vitest/coverage-v8": "^5.1.2",
     "cspell": "^10.5.2",
     "czg": "^1.14.0",
     "dprint": "^0.65.0",
-    "eslint": "^10.15.0",
+    "eslint": "^10.16.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "jsdom": "^31.0.1",
@@ -79,12 +79,12 @@
     "nano-staged": "^1.0.2",
     "obsidian": "^1.14.4",
     "obsidian-integration-testing": "^18.1.0",
-    "obsidian-test-mocks": "^8.1.0",
+    "obsidian-test-mocks": "^8.2.0",
     "sass-embedded": "^1.108.2",
     "sharp": "^0.35.5",
     "tslib": "^2.9.1",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.74.0",
-    "vitest": "^5.1.1"
+    "vitest": "^5.1.2"
   }
 }
